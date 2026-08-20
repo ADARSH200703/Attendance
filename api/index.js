@@ -1,5 +1,5 @@
-const server = require("../server");
+const handleRequest = require("../server");
 
 module.exports = (req, res) => {
-  return server.emit("request", req, res);
+  return handleRequest(req, res);
 };

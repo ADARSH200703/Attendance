@@ -145,8 +145,8 @@ function sendJson(res, statusCode, data) {
   res.end(JSON.stringify(data));
 }
 
-// HTTP Server
-const server = http.createServer(async (req, res) => {
+// Request Handler Function (Compatible with standalone Node.js and Vercel Serverless)
+async function handleRequest(req, res) {
   const parsedUrl = new URL(req.url, `http://${req.headers.host || "localhost"}`);
   const pathname = parsedUrl.pathname;
   const method = req.method;
@@ -408,10 +408,13 @@ const server = http.createServer(async (req, res) => {
     });
     res.end(data);
   });
-});
+}
+
+// HTTP Server Instance
+const server = http.createServer(handleRequest);
 
 // Export for Vercel Serverless Functions
-module.exports = server;
+module.exports = handleRequest;
 
 // Start standalone HTTP Server if not running in Vercel Serverless environment
 if (!process.env.VERCEL) {
