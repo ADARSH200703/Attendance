@@ -410,26 +410,31 @@ const server = http.createServer(async (req, res) => {
   });
 });
 
-// Start Server with auto-fallback if port is busy
-function startListening(port) {
-  server.listen(port, "0.0.0.0", () => {
-    console.log(`\n======================================================`);
-    console.log(` Attendly Full-Fledged Backend & Kiosk Server Running!`);
-    console.log(` Local URL:    http://127.0.0.1:${port}`);
-    console.log(` Environment:  ${process.env.NODE_ENV || "development"}`);
-    console.log(` MongoDB URI:  ${MONGO_URI.replace(/:[^@]+@/, ":****@")}`);
-    console.log(` Ready for Free Cloud Deployment!`);
-    console.log(`======================================================\n`);
-  });
+// Export for Vercel Serverless Functions
+module.exports = server;
 
-  server.on("error", (err) => {
-    if (err.code === "EADDRINUSE") {
-      console.warn(` Port ${port} is busy, switching to port ${port + 1}...`);
-      startListening(port + 1);
-    } else {
-      console.error(" Server error:", err);
-    }
-  });
+// Start standalone HTTP Server if not running in Vercel Serverless environment
+if (!process.env.VERCEL) {
+  function startListening(port) {
+    server.listen(port, "0.0.0.0", () => {
+      console.log(`\n======================================================`);
+      console.log(` Attendly Full-Fledged Backend & Kiosk Server Running!`);
+      console.log(` Local URL:    http://127.0.0.1:${port}`);
+      console.log(` Environment:  ${process.env.NODE_ENV || "development"}`);
+      console.log(` MongoDB URI:  ${MONGO_URI.replace(/:[^@]+@/, ":****@")}`);
+      console.log(` Ready for Cloud Deployment!`);
+      console.log(`======================================================\n`);
+    });
+
+    server.on("error", (err) => {
+      if (err.code === "EADDRINUSE") {
+        console.warn(` Port ${port} is busy, switching to port ${port + 1}...`);
+        startListening(port + 1);
+      } else {
+        console.error(" Server error:", err);
+      }
+    });
+  }
+
+  startListening(Number(PORT));
 }
-
-startListening(Number(PORT));
