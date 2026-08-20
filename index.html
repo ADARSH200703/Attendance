@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Attendly — College Attendance & Biometric Kiosk</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=Playfair+Display:ital,wght@0,600..800;1,600..800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">a</div>
+        <span>attendly</span>
+      </div>
+      <nav>
+        <p class="nav-label">WORKSPACE</p>
+        <button class="nav-item active" data-view="overview"><span>⌂</span> Overview</button>
+        <button class="nav-item teacher-only" data-view="attendance"><span>✓</span> Attendance roster</button>
+        <button class="nav-item student-only" data-view="my-attendance" style="display:none;"><span>✓</span> My attendance</button>
+        <button class="nav-item teacher-only" data-view="kiosk"><span>◉</span> Face kiosk <span class="kiosk-live-badge">LIVE</span></button>
+        <button class="nav-item student-only" data-view="my-badge" style="display:none;"><span>⌘</span> My QR badge</button>
+        <button class="nav-item" data-view="timetable"><span>▦</span> Timetable</button>
+        <button class="nav-item teacher-only" data-view="reports"><span>◫</span> Reports</button>
+        <button class="nav-item student-only" data-view="student-leaves" style="display:none;"><span>◱</span> Apply for leave</button>
+        <button class="nav-item teacher-only" data-view="leaves"><span>◱</span> Leave requests <b id="leaveBadge">3</b></button>
+        <p class="nav-label admin-nav">MANAGEMENT</p>
+        <button class="nav-item admin-only" data-view="people"><span>♙</span> People directory</button>
+        <button class="nav-item admin-only" data-view="classes"><span>▤</span> Classes & subjects</button>
+        <button class="nav-item admin-only" data-view="profiles"><span>◎</span> Face profiles</button>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="sidebar-theme-wrap">
+          <span class="sidebar-theme-icon">🌓</span>
+          <select id="themeSelect" class="sidebar-theme-select" aria-label="Switch color theme" title="Color Theme">
+            <option value="system">💻 System theme</option>
+            <option value="light">☀️ Light mode</option>
+            <option value="dark">🌙 Dark mode</option>
+          </select>
+        </div>
+        <div class="profile">
+          <div class="avatar" id="sideAvatar">AS</div>
+          <div>
+            <strong id="sideName">Adarsh Sharma</strong>
+            <small id="sideRole">Faculty · CSE</small>
+          </div>
+          <span>⌄</span>
+        </div>
+      </div>
+    </aside>
+
+    <main>
+      <header>
+        <div>
+          <p class="eyebrow" id="greeting">LOADING CURRENT TIME…</p>
+          <h1 id="pageTitle">Welcome, Adarsh <span>✦</span></h1>
+        </div>
+        <div class="header-actions">
+          <div class="search-box">
+            <span class="search-icon">⌕</span>
+            <input type="text" id="globalSearch" placeholder="Search student, class..." />
+          </div>
+          <div class="notification-wrapper">
+            <button class="notification" id="notifBtn" aria-label="Notifications" title="Notifications">
+              <span>🔔</span>
+              <span id="notifDot" class="notif-badge">3</span>
+            </button>
+            <div class="notif-dropdown" id="notifDropdown">
+              <div class="notif-dropdown-head">
+                <div class="notif-title-row">
+                  <h3>Notifications</h3>
+                  <span class="notif-count-badge" id="notifUnreadBadge">3 New</span>
+                </div>
+                <button class="notif-action-btn" id="markAllReadBtn">Mark all read</button>
+              </div>
+              <div class="notif-filter-tabs">
+                <button class="notif-tab active" data-notif-filter="all">All (3)</button>
+                <button class="notif-tab" data-notif-filter="kiosk">Biometric</button>
+                <button class="notif-tab" data-notif-filter="leave">Leaves</button>
+                <button class="notif-tab" data-notif-filter="alert">Alerts</button>
+              </div>
+              <div class="notif-list" id="notifList">
+                <div class="notif-item unread" data-category="kiosk">
+                  <div class="notif-icon green-icon">◉</div>
+                  <div class="notif-content">
+                    <div class="notif-row-top">
+                      <strong>Biometric Sync Complete</strong>
+                      <time>2m ago</time>
+                    </div>
+                    <p>28 students auto-verified for CSE 3A Data Structures lecture session.</p>
+                    <div class="notif-inline-actions">
+                      <button class="link-btn" data-view="kiosk">View Kiosk Feed →</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="notif-item unread" data-category="leave">
+                  <div class="notif-icon orange-icon">◱</div>
+                  <div class="notif-content">
+                    <div class="notif-row-top">
+                      <strong>New Leave Request</strong>
+                      <time>15m ago</time>
+                    </div>
+                    <p>Siddharth Sen (CSE/23/045) requested 2 days Medical Leave.</p>
+                    <div class="notif-inline-actions">
+                      <button class="mini-btn green" onclick="this.closest('.notif-item').remove(); toast('Leave approved');">Approve</button>
+                      <button class="mini-btn gray" onclick="this.closest('.notif-item').remove(); toast('Leave declined');">Decline</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="notif-item unread" data-category="alert">
+                  <div class="notif-icon red-icon">⚠</div>
+                  <div class="notif-content">
+                    <div class="notif-row-top">
+                      <strong>Low Attendance Threshold</strong>
+                      <time>1h ago</time>
+                    </div>
+                    <p>Tanmay Bhatt (CSE/23/048) dropped to 68% attendance (below 75% cutoff).</p>
+                    <div class="notif-inline-actions">
+                      <button class="link-btn" data-view="reports">Open Defaulter Report →</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="notif-item" data-category="kiosk">
+                  <div class="notif-icon blue-icon">🛡</div>
+                  <div class="notif-content">
+                    <div class="notif-row-top">
+                      <strong>Local Security Sandbox</strong>
+                      <time>Yesterday</time>
+                    </div>
+                    <p>Biometric templates securely cached in local storage. No raw video transmitted.</p>
+                  </div>
+                </div>
+              </div>
+              <div class="notif-dropdown-footer">
+                <button class="notif-clear-btn" id="clearAllNotifsBtn">Clear all notifications</button>
+              </div>
+            </div>
+          </div>
+          <button class="outline small" id="helpBtn" title="Help & Guide">? &nbsp; Help & guide</button>
+          <select id="roleSelect" aria-label="Switch role">
+            <option value="teacher">Teacher view (Faculty)</option>
+            <option value="student">Student view</option>
+            <option value="admin">Admin view (Full control)</option>
+          </select>
+        </div>
+      </header>
+
+      <!-- OVERVIEW -->
+      <section id="overview" class="view active">
+        <!-- Teacher Hero Card -->
+        <div class="hero-card teacher-only" id="teacherHero">
+          <div>
+            <p class="eyebrow">LIVE SESSION</p>
+            <h2>Data Structures <span>·</span> CSE 3A</h2>
+            <p>Thursday, 10:00 – 11:00 AM &nbsp; · &nbsp; Room 204 (East Campus)</p>
+          </div>
+          <div class="hero-actions">
+            <div class="live-pill"><i></i> Class in progress</div>
+            <div class="hero-btn-group">
+              <button class="secondary-btn" id="heroKioskBtn">Launch Face Kiosk ◉</button>
+              <button class="primary" id="markBtn">Mark attendance <span>→</span></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Student Hero Card -->
+        <div class="hero-card student-only" id="studentHero" style="display:none; background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);">
+          <div>
+            <p class="eyebrow" style="color:#93c5fd;">STUDENT ATTENDANCE PORTAL</p>
+            <h2>Welcome, Adarsh Sharma <span>·</span> CSE/23/041</h2>
+            <p>Semester 5 · Computer Science & Engineering (Section 3A) · Status: <b>Good Standing</b></p>
+          </div>
+          <div class="hero-actions">
+            <div class="live-pill" style="background:rgba(34,197,94,0.2);color:#86efac;"><i></i> 92.4% Safe Attendance</div>
+            <div class="hero-btn-group">
+              <button class="secondary-btn" data-view="my-badge">View QR Badge ⌘</button>
+              <button class="primary" data-view="student-leaves">Apply for Leave <span>+</span></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Teacher Stats Grid -->
+        <div class="stats-grid teacher-only" id="teacherStats">
+          <article>
+            <div class="stat-icon green">✓</div>
+            <div>
+              <p>Today’s attendance</p>
+              <h3 id="statTodayRate">88<span>%</span></h3>
+              <small class="up">↑ 4.2% <em>vs last class</em></small>
+            </div>
+          </article>
+          <article>
+            <div class="stat-icon orange">◷</div>
+            <div>
+              <p>Pending approvals</p>
+              <h3 id="statPendingLeaves">03</h3>
+              <small><em>Leave requests</em></small>
+            </div>
+          </article>
+          <article>
+            <div class="stat-icon violet">◎</div>
+            <div>
+              <p>Classes this week</p>
+              <h3>18<span>/22</span></h3>
+              <small><em>4 sessions remaining</em></small>
+            </div>
+          </article>
+          <article>
+            <div class="stat-icon rose">△</div>
+            <div>
+              <p>At-risk students</p>
+              <h3 id="statAtRiskCount">2</h3>
+              <small class="down">Below 75% threshold</small>
+            </div>
+          </article>
+        </div>
+
+        <!-- Student Stats Grid -->
+        <div class="stats-grid student-only" id="studentStats" style="display:none;">
+          <article>
+            <div class="stat-icon green">✓</div>
+            <div>
+              <p>My Overall Attendance</p>
+              <h3>92.4<span>%</span></h3>
+              <small class="up">Above 75% requirement</small>
+            </div>
+          </article>
+          <article>
+            <div class="stat-icon blue">▦</div>
+            <div>
+              <p>Lectures Attended</p>
+              <h3>56<span>/60</span></h3>
+              <small><em>4 missed sessions</em></small>
+            </div>
+          </article>
+          <article>
+            <div class="stat-icon violet">🛡</div>
+            <div>
+              <p>Attendance Margin</p>
+              <h3>+11</h3>
+              <small><em>Safe buffer classes</em></small>
+            </div>
+          </article>
+          <article>
+            <div class="stat-icon orange">◱</div>
+            <div>
+              <p>Active Leaves</p>
+              <h3 id="studentActiveLeavesCount">0</h3>
+              <small><em>Medical & academic</em></small>
+            </div>
+          </article>
+        </div>
+
+        <div class="dashboard-grid">
+          <section class="panel attendance-panel">
+            <div class="panel-head">
+              <div>
+                <h2>Attendance overview</h2>
+                <p>Weekly class attendance rate (%)</p>
+              </div>
+              <select id="overviewWeekSelect">
+                <option value="this">This week</option>
+                <option value="last">Last week</option>
+              </select>
+            </div>
+            <div class="chart">
+              <div class="y-axis">
+                <span>100%</span><span>75%</span><span>50%</span><span>25%</span><span>0%</span>
+              </div>
+              <div class="bars" id="overviewBars"></div>
+            </div>
+            <div class="legend">
+              <span><i></i> Present</span>
+              <span><i style="background:#cbd5e1"></i> Absent</span>
+              <strong>Class average <b id="classAvgText">84.2%</b></strong>
+            </div>
+          </section>
+
+          <section class="panel upcoming">
+            <div class="panel-head">
+              <div>
+                <h2>Up next</h2>
+                <p>Your schedule for today</p>
+              </div>
+              <button class="link" data-view="timetable">View all →</button>
+            </div>
+            <div class="class-list">
+              <div class="class-row">
+                <time><b>11:15</b><small>AM</small></time>
+                <i class="line blue"></i>
+                <div>
+                  <strong>Database Management Systems</strong>
+                  <p>CSE 2B · Room 108</p>
+                </div>
+                <span class="tag">In 35 min</span>
+              </div>
+              <div class="class-row">
+                <time><b>01:30</b><small>PM</small></time>
+                <i class="line gold"></i>
+                <div>
+                  <strong>Lunch break & office hours</strong>
+                  <p>Faculty Lounge · Room 302</p>
+                </div>
+              </div>
+              <div class="class-row">
+                <time><b>02:15</b><small>PM</small></time>
+                <i class="line purple"></i>
+                <div>
+                  <strong>Data Structures Lab</strong>
+                  <p>CSE 3A · Computing Lab 03</p>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <section class="panel attention">
+          <div class="panel-head">
+            <div>
+              <h2>Needs your attention <span id="attentionCount">3</span></h2>
+              <p>Students and requests requiring action</p>
+            </div>
+            <button class="link" data-view="leaves">View all requests →</button>
+          </div>
+          <div class="attention-grid" id="attentionGrid">
+            <div class="attention-item">
+              <div class="round-avatar coral">RJ</div>
+              <div>
+                <strong>Rahul Joshi</strong>
+                <p>Attendance below 75% · <b>68%</b></p>
+              </div>
+              <button class="outline notify-btn" data-name="Rahul Joshi">Notify</button>
+            </div>
+            <div class="attention-item">
+              <div class="round-avatar bluebg">PM</div>
+              <div>
+                <strong>Priya Mehta</strong>
+                <p>Medical Leave · 19–21 Aug</p>
+              </div>
+              <button class="approve" data-view="leaves">Review</button>
+            </div>
+            <div class="attention-item">
+              <div class="round-avatar yellow">AK</div>
+              <div>
+                <strong>Arjun Kapoor</strong>
+                <p>Attendance below 75% · <b>71%</b></p>
+              </div>
+              <button class="outline notify-btn" data-name="Arjun Kapoor">Notify</button>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <!-- TAKE ATTENDANCE -->
+      <section id="attendance" class="view">
+        <div class="section-top">
+          <div>
+            <p class="eyebrow">CSE 3A · DATA STRUCTURES</p>
+            <h2>Take attendance</h2>
+            <p id="attendanceDateLabel">Thursday, 20 Aug · 10:00 AM · Room 204</p>
+          </div>
+          <div class="method-tabs">
+            <button class="selected" data-method="manual">Manual Roster</button>
+            <button data-method="qr">⌘ Scan QR Badges</button>
+            <button data-method="kiosk">◉ Face Biometric</button>
+          </div>
+        </div>
+
+        <div class="attendance-summary-card">
+          <div class="summary-stat"><span class="dot green-dot"></span> <strong id="countPresent">0</strong> Present</div>
+          <div class="summary-stat"><span class="dot orange-dot"></span> <strong id="countLate">0</strong> Late</div>
+          <div class="summary-stat"><span class="dot red-dot"></span> <strong id="countAbsent">0</strong> Absent</div>
+          <div class="summary-stat-progress">
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill" id="rosterProgressFill" style="width: 0%"></div>
+            </div>
+            <span id="rosterPercentText">0% Attended</span>
+          </div>
+        </div>
+
+        <div class="panel roster">
+          <div class="roster-tools">
+            <div class="roster-search-wrap">
+              <input type="text" id="rosterSearch" placeholder="Search student name or roll ID..." />
+              <div class="roster-filter-pills">
+                <button class="pill active" data-filter="all">All (<span id="countTotal">0</span>)</button>
+                <button class="pill" data-filter="present">Present</button>
+                <button class="pill" data-filter="late">Late</button>
+                <button class="pill" data-filter="absent">Absent</button>
+              </div>
+            </div>
+            <div class="roster-actions">
+              <button class="outline small" id="markAllPresentBtn">✓ Mark all present</button>
+              <button class="primary small" id="saveAttendance">💾 Save attendance</button>
+            </div>
+          </div>
+          <div class="student-head">
+            <span>STUDENT</span>
+            <span>STATUS</span>
+            <span>CHECK-IN TIME</span>
+          </div>
+          <div id="rosterRows"></div>
+        </div>
+      </section>
+
+      <!-- FACE KIOSK -->
+      <section id="kiosk" class="view">
+        <div class="section-top">
+          <div>
+            <p class="eyebrow">BIOMETRIC INTELLIGENCE</p>
+            <h2>Face attendance kiosk</h2>
+            <p>CSE 3A · Data Structures · Room 204 (Auto & Manual Check-in)</p>
+          </div>
+          <div class="kiosk-header-actions">
+            <div class="kiosk-state">
+              <i id="kioskStateIndicator"></i>
+              <span id="syncState">Ready</span>
+            </div>
+            <button class="secondary-btn small" id="kioskSimBtn" title="Test with simulated camera face">🎭 Simulation Mode</button>
+          </div>
+        </div>
+
+        <div class="kiosk-layout">
+          <!-- Camera Viewport -->
+          <section class="kiosk-camera">
+            <div class="camera-top">
+              <span id="cameraState">● CAMERA OFF</span>
+              <div class="cam-select-wrap">
+                <select id="cameraSourceSelect" title="Select camera device">
+                  <option value="default">Default Web Camera</option>
+                </select>
+              </div>
+              <span id="cameraClock">10:00:00</span>
+            </div>
+
+            <div class="camera-frame" id="cameraFrame">
+              <video id="kioskVideo" autoplay muted playsinline></video>
+              <canvas id="faceCanvas"></canvas>
+              
+              <!-- HUD Target & Guides -->
+              <div class="face-guide" id="faceGuide">
+                <span class="corner tl"></span>
+                <span class="corner tr"></span>
+                <span class="corner bl"></span>
+                <span class="corner br"></span>
+                <div class="scan-laser" id="scanLaser"></div>
+                <div class="face-icon" id="faceGuideIcon">◯</div>
+                <p id="cameraHint">Start the camera</p>
+                <small id="livenessHint">Local AI template matching</small>
+              </div>
+
+              <!-- Live HUD Metrics Overlay -->
+              <div class="hud-stats-overlay" id="hudOverlay" style="display:none;">
+                <div class="hud-pill"><span class="hud-dot"></span> <span id="hudConfidence">Face: None</span></div>
+                <div class="hud-pill"><span id="hudFps">30 FPS</span></div>
+                <div class="hud-pill"><span id="hudLiveness">Liveness: Waiting</span></div>
+              </div>
+            </div>
+
+            <div class="camera-bottom">
+              <span class="secure-dot">● Zero Cloud Uploads · Local Processing</span>
+              <span id="camStatusDetail">Ready to verify student faces</span>
+            </div>
+          </section>
+
+          <!-- Result & Verification Panel -->
+          <section class="kiosk-result">
+            <div id="resultIcon" class="result-icon neutral">◎</div>
+            <p class="eyebrow" id="resultLabel">STAND IN FRAME</p>
+            <h3 id="resultTitle">Welcome!</h3>
+            <p id="resultText">Click <b>Start camera</b> to activate live biometric verification.<br>Face data is encrypted locally.</p>
+            
+            <div class="kiosk-action-group">
+              <button class="primary kiosk-button" id="startCamera">Start camera</button>
+              <button class="primary kiosk-button hidden" id="startScan">Verify & mark attendance</button>
+              <button class="outline kiosk-button hidden" id="stopCameraBtn">Stop camera</button>
+            </div>
+
+            <div class="quick-enroll-hint">
+              <button class="ghost-button" id="unknownFace">Face not recognized?</button>
+              <button class="link-button" id="kioskEnrollQuickBtn">+ Enroll your face here</button>
+            </div>
+
+            <div class="privacy-note">
+              ⌑ Compliant with on-device biometric standards. Raw frames are never sent over any network.
+            </div>
+          </section>
+        </div>
+
+        <!-- Live Kiosk Check-In Activity Feed -->
+        <div class="panel kiosk-activity-panel">
+          <div class="panel-head">
+            <div>
+              <h2>Recent Kiosk Check-ins</h2>
+              <p>Real-time attendance log for current session</p>
+            </div>
+            <button class="outline small" id="clearSessionLogBtn">Clear session log</button>
+          </div>
+          <div class="kiosk-log-ticker" id="kioskLogTicker">
+            <div class="empty-log-msg">No kiosk check-ins in this session yet. Start the camera and verify a face!</div>
+          </div>
+        </div>
+
+        <section class="panel kiosk-footer">
+          <div>
+            <strong>Anti-Proxy & Liveness</strong>
+            <p>Real-time optical flow & micro-movement tracking prevents photo/screen spoofing.</p>
+          </div>
+          <div>
+            <strong>Instant Roster Sync</strong>
+            <p id="offlineStatus">Verified faces instantly update the teacher's live roster and analytics.</p>
+          </div>
+          <div>
+            <strong>Duplicate Shield</strong>
+            <p>One verified check-in per student per lecture session.</p>
+          </div>
+          <button class="link" data-view="profiles">Manage face profiles →</button>
+        </section>
+      </section>
+
+      <!-- TIMETABLE -->
+      <section id="timetable" class="view">
+        <div class="section-top">
+          <div>
+            <p class="eyebrow">ACADEMIC SCHEDULE</p>
+            <h2>My timetable</h2>
+            <p>Weekly teaching matrix · Semester 5 (2026)</p>
+          </div>
+          <div class="timetable-top-actions">
+            <button class="primary small" id="addSessionBtn">+ Add session</button>
+          </div>
+        </div>
+        <div class="panel timetable">
+          <div class="weekdays">
+            <span></span>
+            <span>MON 17</span>
+            <span>TUE 18</span>
+            <span>WED 19</span>
+            <span class="current">THU 20 (Today)</span>
+            <span>FRI 21</span>
+          </div>
+          <div class="schedule">
+            <div class="times">
+              <span>9:00 AM</span>
+              <span>10:00 AM</span>
+              <span>11:00 AM</span>
+              <span>12:00 PM</span>
+              <span>1:00 PM</span>
+              <span>2:00 PM</span>
+              <span>3:00 PM</span>
+            </div>
+            <div class="events" id="timetableEvents">
+              <div class="event e1" style="left:2%;top:12%" data-title="Algorithms" data-class="CSE 3B" data-room="Room 201" data-time="09:00 - 10:00 AM">
+                <b>Algorithms</b>
+                <small>CSE 3B · 201</small>
+              </div>
+              <div class="event e2" style="left:22%;top:30%" data-title="DBMS" data-class="CSE 2B" data-room="Room 108" data-time="11:15 - 12:15 PM">
+                <b>DBMS</b>
+                <small>CSE 2B · 108</small>
+              </div>
+              <div class="event e3" style="left:42%;top:12%" data-title="Data Structures" data-class="CSE 3A" data-room="Room 204" data-time="10:00 - 11:00 AM">
+                <b>Data Structures</b>
+                <small>CSE 3A · 204 (Active)</small>
+              </div>
+              <div class="event e4" style="left:62%;top:52%" data-title="DS Lab" data-class="CSE 3A" data-room="Computing Lab 03" data-time="02:15 - 04:15 PM">
+                <b>DS Lab</b>
+                <small>CSE 3A · Lab 03</small>
+              </div>
+              <div class="event e5" style="left:82%;top:30%" data-title="Algorithms" data-class="CSE 3B" data-room="Room 201" data-time="11:15 - 12:15 PM">
+                <b>Algorithms</b>
+                <small>CSE 3B · 201</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- REPORTS -->
+      <section id="reports" class="view">
+        <div class="section-top">
+          <div>
+            <p class="eyebrow">ANALYTICS & AUDIT</p>
+            <h2>Attendance reports</h2>
+            <p>Generate, visualize, and export verified records</p>
+          </div>
+          <button class="primary small" id="exportBtn">↓ Export all data (CSV)</button>
+        </div>
+        <div class="report-grid">
+          <div class="panel report-card">
+            <div class="report-icon">▤</div>
+            <h3>Class-wise report</h3>
+            <p>Daily and monthly attendance distributions for all classes.</p>
+            <button class="link open-report-btn" data-type="class">Generate report →</button>
+          </div>
+          <div class="panel report-card">
+            <div class="report-icon gold-icon">◫</div>
+            <h3>Subject-wise report</h3>
+            <p>Cross-subject tracking and practical vs theory rates.</p>
+            <button class="link open-report-btn" data-type="subject">Generate report →</button>
+          </div>
+          <div class="panel report-card">
+            <div class="report-icon purple-icon">♧</div>
+            <h3>Defaulter list (&lt;75%)</h3>
+            <p>Flagged students requiring warning notices or parent alerts.</p>
+            <button class="link open-report-btn" data-type="defaulter">Generate report →</button>
+          </div>
+        </div>
+
+        <!-- Interactive Animated Analytics Graphs in Reports -->
+        <div class="reports-analytics-grid">
+          <!-- Animated Radial Donut Gauge for Overall Rate -->
+          <div class="panel analytics-card">
+            <div class="analytics-card-head">
+              <h3>Overall Attendance Index</h3>
+              <span class="badge-pill green">CSE 3A · Live</span>
+            </div>
+            <div class="donut-chart-container">
+              <svg class="radial-progress-svg" viewBox="0 0 160 160">
+                <circle class="radial-bg" cx="80" cy="80" r="62" />
+                <circle class="radial-meter" id="reportRadialMeter" cx="80" cy="80" r="62" stroke-dasharray="389.5" stroke-dashoffset="389.5" />
+              </svg>
+              <div class="donut-center-info">
+                <strong id="reportRadialText" class="animated-counter" data-target="88.4">0%</strong>
+                <small>Semester Target: 75%</small>
+              </div>
+            </div>
+            <div class="radial-meta-tags">
+              <span class="tag-chip green">✓ 30 Students Clear</span>
+              <span class="tag-chip red">⚠ 2 At-Risk</span>
+            </div>
+          </div>
+
+          <!-- Animated Subject Distribution Progress Bars -->
+          <div class="panel analytics-card subject-bars-card">
+            <div class="analytics-card-head">
+              <h3>Course-wise Attendance Benchmarks</h3>
+              <small style="color:var(--muted)">Semester 5 Curriculum</small>
+            </div>
+            <div class="animated-subject-bars" id="reportSubjectBars">
+              <div class="subject-bar-item">
+                <div class="bar-label-row">
+                  <span><b>CS-301</b> Data Structures & Algorithms</span>
+                  <strong class="bar-val">88.4%</strong>
+                </div>
+                <div class="progress-track"><div class="progress-fill fill-teal" style="--w: 88.4%;"></div></div>
+              </div>
+              <div class="subject-bar-item">
+                <div class="bar-label-row">
+                  <span><b>CS-302</b> Database Management Systems</span>
+                  <strong class="bar-val">84.2%</strong>
+                </div>
+                <div class="progress-track"><div class="progress-fill fill-blue" style="--w: 84.2%;"></div></div>
+              </div>
+              <div class="subject-bar-item">
+                <div class="bar-label-row">
+                  <span><b>CS-303</b> Data Structures Lab</span>
+                  <strong class="bar-val">92.1%</strong>
+                </div>
+                <div class="progress-track"><div class="progress-fill fill-green" style="--w: 92.1%;"></div></div>
+              </div>
+              <div class="subject-bar-item">
+                <div class="bar-label-row">
+                  <span><b>CS-304</b> Discrete Mathematics</span>
+                  <strong class="bar-val">79.6%</strong>
+                </div>
+                <div class="progress-track"><div class="progress-fill fill-purple" style="--w: 79.6%;"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel reports-table-panel" id="reportPreviewContainer">
+          <div class="panel-head">
+            <div>
+              <h2 id="reportPreviewTitle">Current Class Attendance Summary (CSE 3A)</h2>
+              <p id="reportPreviewSubtitle">Real-time statistics computed from live roster and kiosk check-ins</p>
+            </div>
+            <button class="outline small" id="downloadCurrentReportBtn">Download CSV</button>
+          </div>
+          <div id="reportContentTable"></div>
+        </div>
+      </section>
+
+      <!-- STUDENT VIEW: MY ATTENDANCE -->
+      <section id="my-attendance" class="view">
+        <div class="section-top">
+          <div>
+            <p class="eyebrow">STUDENT PORTAL</p>
+            <h2>My attendance record</h2>
+            <p>Adarsh Sharma · CSE/23/041 · Semester 5 (CSE 3A)</p>
+          </div>
+          <button class="primary small" id="downloadMyTranscriptBtn">↓ Download transcript</button>
+        </div>
+
+        <div class="stats-grid">
+          <article>
+            <div class="stat-icon green">✓</div>
+            <div>
+              <p>Cumulative Attendance</p>
+              <h3>92.4<span>%</span></h3>
+              <small class="up">Good Standing</small>
+            </div>
+          </article>
+          <article>
+            <div class="stat-icon blue">▦</div>
+            <div>
+              <p>Lectures Attended</p>
+              <h3>56<span>/60</span></h3>
+              <small>Across 4 subjects</small>
+            </div>
+          </article>
+          <article>
+            <div class="stat-icon orange">⚠</div>
+            <div>
+              <p>Minimum Threshold</p>
+              <h3>75<span>%</span></h3>
+              <small>University policy</small>
+            </div>
+          </article>
+          <article>
+            <div class="stat-icon violet">🛡</div>
+            <div>
+              <p>Safe Absences Allowed</p>
+              <h3>11</h3>
+              <small>Buffer classes</small>
+            </div>
+          </article>
+        </div>
+
+        <div class="panel student-course-breakdown-panel">
+          <div class="panel-head">
+            <div>
+              <h2>Course-wise Attendance Breakdown</h2>
+              <p>Real-time subject attendance verified by biometric kiosk</p>
+            </div>
+          </div>
+          <div class="student-course-cards" id="studentCourseCards">
+            <div class="course-card">
+              <div class="course-head">
+                <div>
+                  <strong>CS-301 · Data Structures & Algorithms</strong>
+                  <p>Faculty: Adarsh Sharma · Room 204</p>
+                </div>
+                <span class="badge-pill green">92.8%</span>
+              </div>
+              <div class="progress-track"><div class="progress-fill fill-teal" style="--w: 92.8%;"></div></div>
+              <div class="course-stats-row">
+                <span>Attended: <b>26/28</b> classes</span>
+                <span class="status-safe" style="color:var(--green);font-weight:600;">Safe (+5 buffer)</span>
+              </div>
+            </div>
+
+            <div class="course-card">
+              <div class="course-head">
+                <div>
+                  <strong>CS-302 · Database Management Systems</strong>
+                  <p>Faculty: Sarah Adams · Room 108</p>
+                </div>
+                <span class="badge-pill green">87.5%</span>
+              </div>
+              <div class="progress-track"><div class="progress-fill fill-blue" style="--w: 87.5%;"></div></div>
+              <div class="course-stats-row">
+                <span>Attended: <b>21/24</b> classes</span>
+                <span class="status-safe" style="color:var(--green);font-weight:600;">Safe (+3 buffer)</span>
+              </div>
+            </div>
+
+            <div class="course-card">
+              <div class="course-head">
+                <div>
+                  <strong>CS-303 · Data Structures Lab</strong>
+                  <p>Faculty: Adarsh Sharma · Lab 03</p>
+                </div>
+                <span class="badge-pill green">100%</span>
+              </div>
+              <div class="progress-track"><div class="progress-fill fill-green" style="--w: 100%;"></div></div>
+              <div class="course-stats-row">
+                <span>Attended: <b>14/14</b> classes</span>
+                <span class="status-safe" style="color:var(--green);font-weight:600;">Perfect (+3 buffer)</span>
+              </div>
+            </div>
+
+            <div class="course-card">
+              <div class="course-head">
+                <div>
+                  <strong>CS-304 · Discrete Mathematics</strong>
+                  <p>Faculty: Victor Lin · Room 201</p>
+                </div>
+                <span class="badge-pill green">85.7%</span>
+              </div>
+              <div class="progress-track"><div class="progress-fill fill-purple" style="--w: 85.7%;"></div></div>
+              <div class="course-stats-row">
+                <span>Attended: <b>18/21</b> classes</span>
+                <span class="status-safe" style="color:var(--green);font-weight:600;">Safe (+2 buffer)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- STUDENT VIEW: MY DIGITAL QR BADGE -->
+      <section id="my-badge" class="view">
+        <div class="section-top">
+          <div>
+            <p class="eyebrow">TOUCHLESS IDENTIFICATION</p>
+            <h2>My digital student ID badge</h2>
+            <p>Use this QR badge for instant check-in at Face Kiosks & Scanner terminals</p>
+          </div>
+          <button class="primary small" id="printBadgeBtn">🖨 Print / Save badge</button>
+        </div>
+
+        <div class="student-id-card-wrap">
+          <div class="student-id-card" id="studentIdCard">
+            <div class="id-card-header">
+              <div class="brand-mark small">a</div>
+              <div>
+                <strong>UNIVERSITY INSTITUTE OF TECHNOLOGY</strong>
+                <small>Official Student Identity & Biometric Credential</small>
+              </div>
+            </div>
+            <div class="id-card-body">
+              <div class="id-photo-frame">
+                <div class="id-avatar" id="myBadgeAvatar">AS</div>
+                <span class="id-verified-chip">✓ Verified</span>
+              </div>
+              <div class="id-details">
+                <h3 id="myBadgeName">Adarsh Sharma</h3>
+                <p><strong>Roll No:</strong> <code id="myBadgeId">CSE/23/041</code></p>
+                <p><strong>Program:</strong> B.Tech · Computer Science</p>
+                <p><strong>Class:</strong> CSE 3A (Semester 5)</p>
+                <p><strong>Validity:</strong> 2023 – 2027</p>
+              </div>
+              <div class="id-qr-box">
+                <svg viewBox="0 0 100 100" class="qr-svg-code">
+                  <rect width="100" height="100" fill="white"/>
+                  <rect x="5" y="5" width="28" height="28" fill="#0f172a" rx="4"/>
+                  <rect x="9" y="9" width="20" height="20" fill="white" rx="2"/>
+                  <rect x="13" y="13" width="12" height="12" fill="#0f172a" rx="1"/>
+                  <rect x="67" y="5" width="28" height="28" fill="#0f172a" rx="4"/>
+                  <rect x="71" y="9" width="20" height="20" fill="white" rx="2"/>
+                  <rect x="75" y="13" width="12" height="12" fill="#0f172a" rx="1"/>
+                  <rect x="5" y="67" width="28" height="28" fill="#0f172a" rx="4"/>
+                  <rect x="9" y="71" width="20" height="20" fill="white" rx="2"/>
+                  <rect x="13" y="75" width="12" height="12" fill="#0f172a" rx="1"/>
+                  <rect x="38" y="10" width="8" height="8" fill="#0f172a"/>
+                  <rect x="50" y="15" width="8" height="8" fill="#0f172a"/>
+                  <rect x="42" y="28" width="8" height="8" fill="#0f172a"/>
+                  <rect x="10" y="42" width="8" height="8" fill="#0f172a"/>
+                  <rect x="25" y="45" width="8" height="8" fill="#0f172a"/>
+                  <rect x="38" y="40" width="8" height="8" fill="#0f172a"/>
+                  <rect x="52" y="48" width="8" height="8" fill="#0f172a"/>
+                  <rect x="68" y="42" width="8" height="8" fill="#0f172a"/>
+                  <rect x="82" y="45" width="8" height="8" fill="#0f172a"/>
+                  <rect x="42" y="68" width="8" height="8" fill="#0f172a"/>
+                  <rect x="58" y="65" width="8" height="8" fill="#0f172a"/>
+                  <rect x="72" y="72" width="8" height="8" fill="#0f172a"/>
+                  <rect x="85" y="80" width="8" height="8" fill="#0f172a"/>
+                  <rect x="45" y="82" width="8" height="8" fill="#0f172a"/>
+                </svg>
+                <small>Scan at Kiosk</small>
+              </div>
+            </div>
+            <div class="id-card-footer">
+              <span>Biometric ID: <b>BIO-98421</b></span>
+              <span class="id-status-badge">● Active Student</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- STUDENT VIEW: APPLY FOR LEAVE -->
+      <section id="student-leaves" class="view">
+        <div class="section-top">
+          <div>
+            <p class="eyebrow">STUDENT SERVICES</p>
+            <h2>Apply for leave</h2>
+            <p>Submit leave application with verified documentation for faculty approval</p>
+          </div>
+        </div>
+
+        <div class="student-leave-layout">
+          <div class="panel student-leave-form-card">
+            <h3>New Leave Application</h3>
+            <form id="studentLeaveForm" onsubmit="return false;">
+              <div class="form-row">
+                <label>Leave Category
+                  <select id="studentLeaveType" required>
+                    <option value="Medical Leave">Medical Leave (Health / Doctor consultation)</option>
+                    <option value="Academic / Hackathon">Academic Event / Hackathon / Conference</option>
+                    <option value="Sports & Athletics">Sports Tournament / Athletics meet</option>
+                    <option value="Family / Personal">Family Emergency / Personal</option>
+                  </select>
+                </label>
+              </div>
+              <div class="form-row two-col">
+                <label>From Date
+                  <input type="date" id="studentLeaveFrom" required />
+                </label>
+                <label>To Date
+                  <input type="date" id="studentLeaveTo" required />
+                </label>
+              </div>
+              <div class="form-row">
+                <label>Reason & Justification
+                  <textarea id="studentLeaveReason" rows="3" placeholder="Describe the reason for your leave request..." required></textarea>
+                </label>
+              </div>
+              <div class="form-actions">
+                <button type="button" class="primary" id="submitStudentLeaveBtn">Submit Leave Request →</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="panel student-leave-history-card">
+            <h3>My Leave History</h3>
+            <div class="student-leave-history-list" id="studentLeaveHistoryList">
+              <div class="leave-history-item">
+                <div>
+                  <strong>Medical Leave</strong>
+                  <p>Viral fever & doctor consultation · 2 days</p>
+                  <small>14 Aug – 15 Aug 2026</small>
+                </div>
+                <span class="tag-chip green">✓ Approved</span>
+              </div>
+              <div class="leave-history-item">
+                <div>
+                  <strong>Academic / Hackathon</strong>
+                  <p>Smart India Hackathon Zonal Round · 3 days</p>
+                  <small>02 Jul – 04 Jul 2026</small>
+                </div>
+                <span class="tag-chip green">✓ Approved</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LEAVES -->
+      <section id="leaves" class="view">
+        <div class="section-top">
+          <div>
+            <p class="eyebrow">STUDENT WELFARE</p>
+            <h2>Leave approvals</h2>
+            <p>Review medical, sports, and personal leave requests</p>
+          </div>
+        </div>
+        <div class="panel leave-list" id="leaveList"></div>
+      </section>
+
+      <!-- PEOPLE DIRECTORY -->
+      <section id="people" class="view">
+        <div class="section-top">
+          <div>
+            <p class="eyebrow">ADMINISTRATION</p>
+            <h2>People directory</h2>
+            <p>Manage students, faculty, and academic staff</p>
+          </div>
+          <button class="primary small" id="addPersonBtn">+ Add student</button>
+        </div>
+        <div class="stats-grid admin-stats">
+          <article>
+            <div>
+              <p>Total students</p>
+              <h3 id="statTotalStudents">32</h3>
+              <small class="up">Enrolled in CSE 3A</small>
+            </div>
+          </article>
+          <article>
+            <div>
+              <p>Faculty members</p>
+              <h3>86</h3>
+              <small>Across 12 departments</small>
+            </div>
+          </article>
+          <article>
+            <div>
+              <p>Active classes</p>
+              <h3>64</h3>
+              <small>Current semester</small>
+            </div>
+          </article>
+        </div>
+
+        <div class="panel people-table-panel">
+          <div class="roster-tools">
+            <input type="text" id="peopleSearch" placeholder="Search people by name, roll number, or department..." />
+          </div>
+          <div class="student-head people-head">
+            <span>NAME / ROLL NO</span>
+            <span>DEPARTMENT</span>
+            <span>ATTENDANCE</span>
+            <span>ACTION</span>
+          </div>
+          <div id="peopleRows"></div>
+        </div>
+      </section>
+
+      <!-- FACE PROFILES & CONSENT -->
+      <section id="profiles" class="view">
+        <div class="section-top">
+          <div>
+            <p class="eyebrow">BIOMETRIC ENROLLMENT</p>
+            <h2>Face profiles & consent</h2>
+            <p>Enroll, update, or remove local face recognition templates</p>
+          </div>
+          <button class="primary small" id="registerFace">+ Open Face Kiosk</button>
+        </div>
+
+        <div class="panel enrol-panel">
+          <div class="enrol-form">
+            <h3>Enroll New Face Template</h3>
+            <div class="enrol-inputs">
+              <label>
+                Student name
+                <input id="enrolName" placeholder="e.g. ABCD" />
+              </label>
+              <label>
+                Student ID
+                <input id="enrolId" placeholder="e.g. 123/abc" />
+              </label>
+            </div>
+            <label class="consent-check">
+              <input id="enrolConsent" type="checkbox" checked /> 
+              <span>I have obtained and verified informed student/guardian consent for local biometric template generation.</span>
+            </label>
+            <div class="enrol-actions">
+              <button class="primary small" id="captureProfile">📷 Capture Face from Camera</button>
+              <button class="outline small" id="autoEnrollSampleBtn">⚡ Enroll Sample Profile</button>
+            </div>
+          </div>
+          <div class="enrol-preview-card" id="enrolPreviewCard">
+            <div class="enrol-preview-avatar" id="enrolPreviewAvatar">--</div>
+            <p id="enrolPreviewStatus">Ready to capture template</p>
+          </div>
+        </div>
+
+        <section class="panel privacy-panel">
+          <div>
+            <div class="privacy-badge">⌑</div>
+            <div>
+              <h3>Privacy-protected biometric records</h3>
+              <p>Face templates and attendance records are stored exclusively inside your browser's local sandbox (`localStorage`). Raw camera frames are processed in-memory and immediately destroyed. Consent can be revoked anytime by deleting a profile.</p>
+            </div>
+          </div>
+          <button class="outline" id="clearAttendance">Clear local attendance logs</button>
+        </section>
+
+        <div class="panel profile-table">
+          <div class="student-head">
+            <span>STUDENT</span>
+            <span>CONSENT STATUS</span>
+            <span>TEMPLATE DETAILS</span>
+            <span>ACTION</span>
+          </div>
+          <div id="profileRows"></div>
+        </div>
+      </section>
+
+      <!-- CLASSES -->
+      <section id="classes" class="view">
+        <div class="section-top">
+          <div>
+            <p class="eyebrow">ADMINISTRATION</p>
+            <h2>Classes & subjects</h2>
+            <p>Organize academic groups and teaching assignments</p>
+          </div>
+          <button class="primary small" id="createClassBtn">+ Create class</button>
+        </div>
+        <div class="panel class-table" id="classesTable">
+          <div><strong>Class</strong><strong>Students</strong><strong>Class teacher</strong><strong>Avg. attendance</strong><strong>Action</strong></div>
+          <div class="class-grid-row"><div>CSE 3A</div><div>32</div><div>Adarsh Sharma</div><div class="percent">88%</div><button class="link manage-class-btn" data-class="CSE 3A">Manage →</button></div>
+          <div class="class-grid-row"><div>CSE 3B</div><div>30</div><div>Victor Lin</div><div class="percent">79%</div><button class="link manage-class-btn" data-class="CSE 3B">Manage →</button></div>
+          <div class="class-grid-row"><div>ECE 2A</div><div>36</div><div>Maya Rao</div><div class="percent">85%</div><button class="link manage-class-btn" data-class="ECE 2A">Manage →</button></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- MODALS -->
+  <!-- QR Scanner Modal -->
+  <div class="modal-backdrop" id="qrModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3>⌘ Scan Student QR Code</h3>
+        <button class="modal-close" id="closeQrModal">✕</button>
+      </div>
+      <div class="qr-scanner-body">
+        <div class="qr-target-box">
+          <div class="qr-reticle"></div>
+          <div class="qr-laser"></div>
+          <p>Hold Student ID Card to camera or pick student below</p>
+        </div>
+        <div class="qr-quick-select">
+          <p class="eyebrow">QUICK SIMULATE QR SCAN</p>
+          <div class="qr-chips" id="qrStudentChips"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Student Modal -->
+  <div class="modal-backdrop" id="addPersonModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3>+ Add Student to Roster</h3>
+        <button class="modal-close" id="closePersonModal">✕</button>
+      </div>
+      <div class="modal-form">
+        <label>Full Name <input id="newPersonName" placeholder="e.g. Siddharth Sen" /></label>
+        <label>Roll / Student ID <input id="newPersonId" placeholder="e.g. CSE/23/045" /></label>
+        <label>Class / Section
+          <select id="newPersonClass">
+            <option value="CSE 3A">CSE 3A</option>
+            <option value="CSE 3B">CSE 3B</option>
+            <option value="ECE 2A">ECE 2A</option>
+          </select>
+        </label>
+        <div class="modal-actions">
+          <button class="outline" id="cancelPersonBtn">Cancel</button>
+          <button class="primary" id="savePersonBtn">Add Student</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Timetable Session Modal -->
+  <div class="modal-backdrop" id="addSessionModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3>+ Add Timetable Session</h3>
+        <button class="modal-close" id="closeSessionModal">✕</button>
+      </div>
+      <div class="modal-form">
+        <label>Subject / Course Name <input id="newSessionSubject" placeholder="e.g. Operating Systems" /></label>
+        <label>Class <input id="newSessionClass" placeholder="e.g. CSE 3A" value="CSE 3A" /></label>
+        <label>Room / Location <input id="newSessionRoom" placeholder="e.g. Room 204" value="Room 204" /></label>
+        <label>Day
+          <select id="newSessionDay">
+            <option value="MON">Monday</option>
+            <option value="TUE">Tuesday</option>
+            <option value="WED">Wednesday</option>
+            <option value="THU">Thursday</option>
+            <option value="FRI">Friday</option>
+          </select>
+        </label>
+        <label>Time Slot
+          <select id="newSessionTime">
+            <option value="09:00">09:00 – 10:00 AM</option>
+            <option value="10:00">10:00 – 11:00 AM</option>
+            <option value="11:15">11:15 – 12:15 PM</option>
+            <option value="14:15">02:15 – 03:15 PM</option>
+          </select>
+        </label>
+        <div class="modal-actions">
+          <button class="outline" id="cancelSessionBtn">Cancel</button>
+          <button class="primary" id="saveSessionBtn">Add to Schedule</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Event Details Popover/Modal -->
+  <div class="modal-backdrop" id="sessionDetailModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3 id="sessionDetailTitle">Class Details</h3>
+        <button class="modal-close" id="closeDetailModal">✕</button>
+      </div>
+      <div class="session-detail-body">
+        <p><strong>Class:</strong> <span id="sessionDetailClass">CSE 3A</span></p>
+        <p><strong>Room:</strong> <span id="sessionDetailRoom">Room 204</span></p>
+        <p><strong>Timing:</strong> <span id="sessionDetailTime">10:00 AM - 11:00 AM</span></p>
+        <div class="modal-actions">
+          <button class="primary" id="sessionStartAttendanceBtn">Open Attendance Roster →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Captured Photo Zoom Lightbox Modal -->
+  <div class="modal-backdrop" id="imageZoomModal">
+    <div class="modal-card image-zoom-card">
+      <div class="modal-head">
+        <div>
+          <h3 id="zoomStudentName">Student Photo</h3>
+          <p class="modal-sub" id="zoomStudentMeta" style="margin:2px 0 0;font-size:12px;color:var(--muted);">Biometric Kiosk Snapshot</p>
+        </div>
+        <button class="modal-close" id="closeImageZoomModal">✕</button>
+      </div>
+      <div class="image-zoom-body">
+        <div class="image-zoom-frame">
+          <img id="zoomModalImg" src="" alt="Captured Student Face" />
+        </div>
+        <div class="image-zoom-info">
+          <div class="zoom-meta-badge"><span class="badge-dot green"></span> Live Biometric Verified</div>
+          <p id="zoomCaptureTime" style="margin:6px 0 0;font-size:12px;color:var(--muted);">Captured via Local Face Kiosk</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">Attendance saved successfully</div>
+  <!-- AI Computer Vision Models for Real-Time Neural Face Detection -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface@0.0.7/dist/blazeface.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
