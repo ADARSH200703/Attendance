@@ -22,7 +22,7 @@ const inMemoryDB = {
     { name: "Meera Nair", rollNo: "CSE/23/006", classId: "CSE 3A", department: "CSE", avatar: "", consentGiven: true, attendanceRate: 91 },
     { name: "Rohan Verma", rollNo: "CSE/23/007", classId: "CSE 3A", department: "CSE", avatar: "", consentGiven: true, attendanceRate: 64 },
     { name: "Siddharth Sen", rollNo: "CSE/23/045", classId: "CSE 3A", department: "CSE", avatar: "", consentGiven: true, attendanceRate: 89 },
-    { name: "Adarsh Sharma", rollNo: "CSE/23/041", classId: "CSE 3A", department: "CSE", avatar: "", consentGiven: true, attendanceRate: 92.4 }
+    { name: "Student", rollNo: "CSE/23/041", classId: "CSE 3A", department: "CSE", avatar: "", consentGiven: true, attendanceRate: 92.4 }
   ],
   attendance: [],
   leaves: [

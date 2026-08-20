@@ -23,7 +23,7 @@ function generateStudentAvatarSvg(name, bg = "#3b82f6") {
 
 // Initial student dataset
 const defaultStudents = [
-  { name: "Adarsh Sharma", id: "CSE/23/041", dept: "CSE 3A", initials: "AS", rate: 88, status: "present", time: "09:52 AM", photo: generateStudentAvatarSvg("Adarsh Sharma", "#3b82f6") },
+  { name: "Student", id: "CSE/23/041", dept: "CSE 3A", initials: "ST", rate: 92.4, status: "present", time: "09:52 AM", photo: generateStudentAvatarSvg("Student", "#3b82f6") },
   { name: "Diya Nair", id: "CSE/23/042", dept: "CSE 3A", initials: "DN", rate: 92, status: "present", time: "09:54 AM", photo: generateStudentAvatarSvg("Diya Nair", "#ec4899") },
   { name: "Rohan Verma", id: "CSE/23/043", dept: "CSE 3A", initials: "RV", rate: 84, status: "late", time: "10:04 AM", photo: generateStudentAvatarSvg("Rohan Verma", "#f59e0b") },
   { name: "Isha Gupta", id: "CSE/23/044", dept: "CSE 3A", initials: "IG", rate: 96, status: "present", time: "09:50 AM", photo: generateStudentAvatarSvg("Isha Gupta", "#10b981") },
@@ -207,7 +207,7 @@ function updateClock() {
 
   const titleEl = $("#pageTitle");
   if (titleEl && $(".view.active")?.id === "overview") {
-    titleEl.innerHTML = `${role === "student" ? "Your Attendance Portal, Adarsh" : greeting + ", Adarsh"} <span>✦</span>`;
+    titleEl.innerHTML = `${role === "student" ? "Welcome, Student" : role === "admin" ? "Welcome, Admin" : greeting + ", Teacher"} <span>✦</span>`;
   }
 
   const camClock = $("#cameraClock");
@@ -2351,9 +2351,9 @@ window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e)
 // Role Switcher & View Permissions
 function applyRole(role) {
   const map = {
-    teacher: ["Adarsh Sharma", "Faculty · CSE", "AS"],
-    student: ["Adarsh Sharma", "Student · CSE/23/041", "AS"],
-    admin: ["Dr. A. Roy", "Dean of Academics", "AR"],
+    teacher: ["Teacher", "Faculty · CSE", "TC"],
+    student: ["Student", "Student · CSE/23/041", "ST"],
+    admin: ["Admin", "Dean of Academics", "AD"],
   };
 
   const info = map[role] || map.teacher;
@@ -2442,9 +2442,9 @@ $("#submitStudentLeaveBtn")?.addEventListener("click", () => {
     const teachItem = document.createElement("div");
     teachItem.className = "leave-item";
     teachItem.innerHTML = `
-      <div class="avatar bluebg">AS</div>
+      <div class="avatar bluebg">ST</div>
       <div class="leave-info">
-        <strong>Adarsh Sharma (CSE/23/041)</strong>
+        <strong>Student (CSE/23/041)</strong>
         <p><b>${escapeHtml(type)}:</b> ${escapeHtml(reason)}</p>
         <small>${from} – ${to} · CSE 3A</small>
       </div>
@@ -2478,7 +2478,7 @@ $("#submitStudentLeaveBtn")?.addEventListener("click", () => {
 $("#downloadMyTranscriptBtn")?.addEventListener("click", () => {
   const content = `ATTENDLY - OFFICIAL STUDENT ATTENDANCE TRANSCRIPT
 ======================================================
-Student: Adarsh Sharma (CSE/23/041)
+Student: Student (CSE/23/041)
 Program: B.Tech Computer Science & Engineering (Section 3A)
 Academic Term: Semester 5 (2026)
 Cumulative Attendance: 92.4% (56 / 60 Sessions)
@@ -2497,7 +2497,7 @@ Generated on: ${new Date().toLocaleString()}
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "Attendance_Transcript_Adarsh_CSE23041.txt";
+  a.download = "Attendance_Transcript_Student_CSE23041.txt";
   a.click();
   URL.revokeObjectURL(url);
   toast("Attendance transcript downloaded.");
