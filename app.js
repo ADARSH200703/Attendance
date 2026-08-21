@@ -648,48 +648,28 @@ let livenessScore = 0;
 let recentMotionScores = [];
 let lastLuminanceMap = null;
 
-// Automatically build and retrieve biometric profiles for all registered students in the database
+// Retrieve verified biometric profiles for enrolled students
 function getEnrolledProfiles() {
   const custom = storage.get("attendlyFaceProfiles", []);
   const list = [...custom];
 
-  students.forEach((s, idx) => {
-    const existing = list.find(
-      (p) => p.id === s.id || p.name.toLowerCase() === s.name.toLowerCase()
-    );
-    if (!existing) {
-      const seedVector = [
-        120 + ((idx * 17) % 40),
-        40 + ((idx * 13) % 35),
-        65 + ((idx * 19) % 35),
-        85 + ((idx * 23) % 30),
-        135 + ((idx * 29) % 40),
-        90 + ((idx * 11) % 30),
-        105 + ((idx * 31) % 35),
-        82 + ((idx * 7) % 28),
-        78 + ((idx * 17) % 32),
-        120 + ((idx * 23) % 35),
-        92 + ((idx * 19) % 30),
-        85 + ((idx * 13) % 25),
-        128 + ((idx * 29) % 35),
-        90 + ((idx * 11) % 25),
-        102 + ((idx * 17) % 30),
-        86 + ((idx * 31) % 28),
-      ];
-      list.push({
-        name: s.name,
-        id: s.id,
-        dept: s.dept || "CSE 3A",
-        featureVector:
-          s.descriptor && s.descriptor.length >= 16
-            ? s.descriptor
-            : seedVector,
-        updated: Date.now(),
-        consent: true,
-        photo: s.photo || "",
-      });
+  // Include any students from MongoDB who have an enrolled face descriptor
+  students.forEach((s) => {
+    if (s.descriptor && Array.isArray(s.descriptor) && s.descriptor.length >= 16) {
+      if (!list.some((p) => p.id === s.id)) {
+        list.push({
+          name: s.name,
+          id: s.id,
+          dept: s.dept || "CSE 3A",
+          featureVector: s.descriptor,
+          updated: Date.now(),
+          consent: true,
+          photo: s.photo || "",
+        });
+      }
     }
   });
+
   return list;
 }
 
@@ -700,7 +680,7 @@ function populateKioskFastChips() {
   container.innerHTML = students
     .map(
       (s) => `
-    <button class="pill small kiosk-fast-chip" data-id="${s.id}" data-name="${escapeHtml(s.name)}" style="font-size:11.5px; padding:4px 10px; border-radius:12px; cursor:pointer; background:var(--panel-bg-subtle); border:1px solid var(--line); color:var(--ink);">
+    <button class="pill small kiosk-fast-chip" data-id="${s.id}" data-name="${escapeHtml(s.name)}" style="font-size:11.5px; padding:4px 10px; border-radius:12px; cursor:pointer; background:var(--panel-bg-subtle); border:1px solid var(--line); color:var(--ink);" title="Click to verify or register face for ${escapeHtml(s.name)}">
       <b>${escapeHtml(s.name)}</b> <small style="opacity:0.75;">(${s.id})</small>
     </button>
   `
@@ -708,15 +688,44 @@ function populateKioskFastChips() {
     .join("");
 
   container.querySelectorAll(".kiosk-fast-chip").forEach((chip) => {
-    chip.addEventListener("click", () => {
+    chip.addEventListener("click", async () => {
       const student = students.find((s) => s.id === chip.dataset.id);
       if (student) {
+        // If face is currently in frame, capture & enroll this unique face to this student
+        if (faceDetected && video && video.readyState >= 2) {
+          const liveVector = extractFeatureVector();
+          const profiles = storage
+            .get("attendlyFaceProfiles", [])
+            .filter((p) => p.id !== student.id);
+          profiles.push({
+            name: student.name,
+            id: student.id,
+            dept: student.dept || "CSE 3A",
+            featureVector: liveVector,
+            updated: Date.now(),
+            consent: true,
+            photo: student.photo || "",
+          });
+          storage.set("attendlyFaceProfiles", profiles);
+
+          student.descriptor = liveVector;
+          api.enrollStudent({
+            name: student.name,
+            rollNo: student.id,
+            classId: student.dept,
+            avatar: student.photo || "",
+            faceDescriptor: liveVector,
+            consentGiven: true,
+          });
+          toast(`Face enrolled & verified for ${student.name}!`);
+        }
+
         liveMatchedStudent = {
           name: student.name,
           id: student.id,
           dept: student.dept || "CSE 3A",
         };
-        processRealtimeCheckin(liveMatchedStudent, 99);
+        processRealtimeCheckin(liveMatchedStudent, 98);
       }
     });
   });
@@ -1056,7 +1065,7 @@ function startTrackingLoop() {
         }
       }
 
-      // Run real-time biometric identity matching every 120ms against all existing database records
+      // Run real-time biometric identity matching every 120ms against enrolled profiles
       if (faceDetected && now - lastMatchTime > 120) {
         lastMatchTime = now;
         const currentVector = extractFeatureVector();
@@ -1071,9 +1080,10 @@ function startTrackingLoop() {
             .sort((a, b) => a.distance - b.distance);
 
           const best = matches[0];
-          if (best) {
+          // Strict biometric threshold: only authentic enrolled face matches (<= 18 Euclidean delta)
+          if (best && best.distance <= 18) {
             liveMatchedStudent = best;
-            liveMatchDistance = Math.min(best.distance, 14);
+            liveMatchDistance = best.distance;
           } else {
             liveMatchedStudent = null;
             liveMatchDistance = 999;
@@ -1099,12 +1109,12 @@ function startTrackingLoop() {
 
         const isRecognized = !!liveMatchedStudent;
         const matchPct = isRecognized
-          ? Math.max(88, Math.min(99, Math.round(100 - liveMatchDistance)))
+          ? Math.max(90, Math.min(99, Math.round(100 - liveMatchDistance)))
           : Math.round(faceConfidence * 100);
 
         const hudLabel = isRecognized
           ? `${liveMatchedStudent.name} (${matchPct}%)`
-          : `Face Tracked (${matchPct}%)`;
+          : `Face Detected · Unregistered`;
 
         drawBiometricHUD(
           ctx,
@@ -1132,7 +1142,7 @@ function startTrackingLoop() {
           autoVerifyHoldCount = 0;
           const camDetail = $("#camStatusDetail");
           if (camDetail) {
-            camDetail.textContent = "● Face detected · Searching template registry...";
+            camDetail.textContent = "● Face detected (Unregistered) · Tap your name below to link face";
           }
         }
       } else {
