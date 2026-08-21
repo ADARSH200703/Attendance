@@ -403,7 +403,7 @@ header h2,
   top: calc(100% + 10px);
   right: 0;
   width: 380px;
-  background: var(--panel-bg);
+  background: var(--paper);
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   box-shadow: 0 14px 36px rgba(0, 0, 0, 0.16), 0 2px 6px rgba(0, 0, 0, 0.06);
@@ -429,7 +429,7 @@ header h2,
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid var(--line);
-  background: var(--panel-bg-subtle);
+  background: var(--paper);
 }
 
 .notif-title-row {
@@ -474,13 +474,13 @@ header h2,
   gap: 6px;
   padding: 10px 16px;
   border-bottom: 1px solid var(--line);
-  background: var(--panel-bg);
+  background: var(--paper);
   overflow-x: auto;
 }
 
 .notif-tab {
   border: 1px solid var(--line);
-  background: var(--input-bg);
+  background: var(--panel-bg-subtle);
   color: var(--muted);
   font: 600 11.5px inherit;
   padding: 4px 12px;
@@ -507,7 +507,7 @@ header h2,
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  background: var(--panel-bg);
+  background: var(--paper);
 }
 
 .notif-item {
@@ -626,7 +626,7 @@ header h2,
 .notif-dropdown-footer {
   padding: 10px 18px;
   border-top: 1px solid var(--line);
-  background: var(--panel-bg-subtle);
+  background: var(--paper);
   display: flex;
   justify-content: center;
 }
