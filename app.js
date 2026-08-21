@@ -1742,11 +1742,165 @@ $("#unknownFace")?.addEventListener("click", () => {
     "failure",
     "UNRECOGNIZED FACE",
     "Need Biometric Enrollment?",
-    "Ask your faculty or administrator to register your face template in the <b>Face Profiles</b> section with consent."
+    "Click <b>+ Enroll your face here</b> below or select your name from the list to link your face instantly."
   );
 });
 
-$("#kioskEnrollQuickBtn")?.addEventListener("click", () => showView("profiles"));
+// Open Direct Quick Face Enrollment Modal
+function openQuickEnrollModal() {
+  const modal = $("#quickEnrollFaceModal");
+  const select = $("#quickEnrollSelectStudent");
+  const nameInput = $("#quickEnrollName");
+  const idInput = $("#quickEnrollId");
+  if (!modal) return;
+
+  if (select) {
+    select.innerHTML =
+      `<option value="new">-- Register New Student --</option>` +
+      students
+        .map(
+          (s) =>
+            `<option value="${s.id}" data-name="${escapeHtml(s.name)}" data-dept="${escapeHtml(s.dept || "CSE 3A")}">${escapeHtml(s.name)} (${s.id})</option>`
+        )
+        .join("");
+  }
+
+  if (nameInput) nameInput.value = "";
+  if (idInput) idInput.value = "";
+  modal.classList.add("open");
+}
+
+$("#kioskEnrollQuickBtn")?.addEventListener("click", openQuickEnrollModal);
+$("#closeQuickEnrollModal")?.addEventListener("click", () =>
+  $("#quickEnrollFaceModal")?.classList.remove("open")
+);
+$("#cancelQuickEnrollBtn")?.addEventListener("click", () =>
+  $("#quickEnrollFaceModal")?.classList.remove("open")
+);
+
+$("#quickEnrollSelectStudent")?.addEventListener("change", (e) => {
+  const val = e.target.value;
+  const customWrap = $("#quickEnrollCustomFields");
+  const nameInput = $("#quickEnrollName");
+  const idInput = $("#quickEnrollId");
+  const classInput = $("#quickEnrollClass");
+
+  if (val === "new") {
+    if (customWrap) customWrap.style.display = "block";
+    if (nameInput) nameInput.value = "";
+    if (idInput) idInput.value = "";
+  } else {
+    const student = students.find((s) => s.id === val);
+    if (student) {
+      if (nameInput) nameInput.value = student.name;
+      if (idInput) idInput.value = student.id;
+      if (classInput) classInput.value = student.dept || "CSE 3A";
+    }
+  }
+});
+
+$("#confirmQuickEnrollBtn")?.addEventListener("click", async () => {
+  const name = $("#quickEnrollName")?.value.trim();
+  const id = $("#quickEnrollId")?.value.trim();
+  const dept = $("#quickEnrollClass")?.value || "CSE 3A";
+
+  if (!name || !id) {
+    toast("Please enter both Student Name and Roll ID.");
+    return;
+  }
+
+  // Ensure camera is active
+  if (!video || video.readyState < 2) {
+    await startCameraStream();
+  }
+
+  const liveVector = extractFeatureVector();
+  let snapData = null;
+  if (video && video.videoWidth > 0 && video.readyState >= 2) {
+    const snapCanvas = document.createElement("canvas");
+    snapCanvas.width = 240;
+    snapCanvas.height = 240;
+    const snapCtx = snapCanvas.getContext("2d");
+    snapCtx.translate(240, 0);
+    snapCtx.scale(-1, 1);
+    snapCtx.drawImage(video, 0, 0, 240, 240);
+    snapData = snapCanvas.toDataURL("image/jpeg", 0.85);
+  }
+
+  const profiles = storage
+    .get("attendlyFaceProfiles", [])
+    .filter((p) => p.id !== id);
+  profiles.push({
+    name,
+    id,
+    dept,
+    featureVector: liveVector,
+    photo: snapData,
+    updated: Date.now(),
+    consent: true,
+  });
+  storage.set("attendlyFaceProfiles", profiles);
+  renderProfiles();
+
+  // Update or insert into students roster
+  let existingStudent = students.find((s) => s.id === id);
+  if (existingStudent) {
+    existingStudent.name = name;
+    existingStudent.dept = dept;
+    existingStudent.descriptor = liveVector;
+    if (snapData) existingStudent.photo = snapData;
+  } else {
+    const initials = name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
+    existingStudent = {
+      name,
+      id,
+      dept,
+      initials,
+      rate: 100,
+      status: "present",
+      time: new Date().toLocaleTimeString("en-IN", {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+      photo: snapData || generateStudentAvatarSvg(name),
+      descriptor: liveVector,
+    };
+    students.push(existingStudent);
+  }
+
+  storage.set("attendlyStudents", students);
+  renderRoster();
+  renderPeopleDirectory();
+  populateKioskFastChips();
+
+  $("#quickEnrollFaceModal")?.classList.remove("open");
+  toast(`Face successfully enrolled for ${name}!`);
+  playSound("success");
+
+  // Save to MongoDB Cloud
+  await api.enrollStudent({
+    name,
+    rollNo: id,
+    classId: dept,
+    department: dept,
+    avatar: existingStudent.photo || "",
+    faceDescriptor: liveVector,
+    consentGiven: true,
+  });
+
+  // Verify and mark attendance immediately
+  liveMatchedStudent = {
+    name,
+    id,
+    dept,
+  };
+  processRealtimeCheckin(liveMatchedStudent, 99);
+});
 
 /* ==========================================================================
    FACE PROFILES & BIOMETRIC CONSENT MANAGEMENT

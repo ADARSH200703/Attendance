@@ -483,9 +483,15 @@
               <button class="outline kiosk-button hidden" id="stopCameraBtn">Stop camera</button>
             </div>
 
-            <!-- Fast 1-Click Identify from Existing Records -->
-            <div class="kiosk-quick-roster-select" style="margin-top:14px; text-align:left; border-top:1px solid var(--line); padding-top:12px;">
-              <small style="color:var(--muted); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:8px;">⚡ Auto-Recognize / 1-Click Identify:</small>
+            <!-- Quick Enroll & Unrecognized Face Options -->
+            <div class="quick-enroll-hint" style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+              <button class="ghost-button" id="unknownFace" style="background:none; border:none; color:var(--muted); font-size:12px; cursor:pointer;">Face not recognized?</button>
+              <button class="link-button" id="kioskEnrollQuickBtn" style="background:none; border:none; color:var(--primary); font-size:12px; font-weight:600; cursor:pointer;">+ Enroll your face here</button>
+            </div>
+
+            <!-- Fast 1-Click Identify & Auto-Enroll from Existing Records -->
+            <div class="kiosk-quick-roster-select" style="margin-top:12px; text-align:left; border-top:1px solid var(--line); padding-top:12px;">
+              <small style="color:var(--muted); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:8px;">⚡ Auto-Recognize / 1-Click Link & Identify:</small>
               <div class="kiosk-student-chips" id="kioskFastChips" style="display:flex; flex-wrap:wrap; gap:6px; max-height:120px; overflow-y:auto; padding-right:4px;"></div>
             </div>
 
@@ -1126,6 +1132,39 @@
         <div class="modal-actions">
           <button class="outline" id="cancelPersonBtn">Cancel</button>
           <button class="primary" id="savePersonBtn">Add Student</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Direct Face Enrollment Modal -->
+  <div class="modal-backdrop" id="quickEnrollFaceModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3>📷 Enroll Student Face</h3>
+        <button class="modal-close" id="closeQuickEnrollModal">✕</button>
+      </div>
+      <div class="modal-form">
+        <label>Select Existing Student or Register New
+          <select id="quickEnrollSelectStudent">
+            <option value="new">-- Register New Student --</option>
+          </select>
+        </label>
+        <div id="quickEnrollCustomFields">
+          <label>Student Full Name <input id="quickEnrollName" placeholder="e.g. Rahul Sharma" /></label>
+          <label>Student Roll ID <input id="quickEnrollId" placeholder="e.g. CSE/23/055" /></label>
+          <label>Class / Section
+            <select id="quickEnrollClass">
+              <option value="CSE 3A">CSE 3A</option>
+              <option value="CSE 3B">CSE 3B</option>
+              <option value="ECE 2A">ECE 2A</option>
+            </select>
+          </label>
+        </div>
+        <p style="font-size:12px; color:var(--muted); margin:4px 0 10px;">Stand in front of the camera and look directly at the screen.</p>
+        <div class="modal-actions">
+          <button class="outline" id="cancelQuickEnrollBtn">Cancel</button>
+          <button class="primary" id="confirmQuickEnrollBtn">📷 Capture & Enroll Face</button>
         </div>
       </div>
     </div>
