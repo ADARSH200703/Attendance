@@ -64,7 +64,7 @@
           </div>
           <div class="notification-wrapper">
             <button class="notification" id="notifBtn" aria-label="Notifications" title="Notifications">
-              <span>🔔</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block;"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
               <span id="notifDot" class="notif-badge">3</span>
             </button>
             <div class="notif-dropdown" id="notifDropdown">
@@ -126,7 +126,7 @@
                 </div>
 
                 <div class="notif-item" data-category="kiosk">
-                  <div class="notif-icon blue-icon">🛡</div>
+                  <div class="notif-icon blue-icon">⛨</div>
                   <div class="notif-content">
                     <div class="notif-row-top">
                       <strong>Local Security Sandbox</strong>
@@ -239,7 +239,7 @@
             </div>
           </article>
           <article>
-            <div class="stat-icon violet">🛡</div>
+            <div class="stat-icon violet">⛨</div>
             <div>
               <p>Attendance Margin</p>
               <h3>+11</h3>
@@ -397,7 +397,7 @@
             <div class="roster-actions">
               <button class="outline small" id="addStudentRosterBtn">+ Add student</button>
               <button class="outline small" id="markAllPresentBtn">✓ Mark all present</button>
-              <button class="primary small" id="saveAttendance">💾 Save attendance</button>
+              <button class="primary small" id="saveAttendance">Save attendance</button>
             </div>
           </div>
           <div class="student-head">
@@ -422,7 +422,7 @@
               <i id="kioskStateIndicator"></i>
               <span id="syncState">Ready</span>
             </div>
-            <button class="secondary-btn small" id="kioskSimBtn" title="Test with simulated camera face">🎭 Simulation Mode</button>
+            <button class="secondary-btn small" id="kioskSimBtn" title="Test with simulated camera face">Simulation Mode</button>
           </div>
         </div>
 
@@ -490,7 +490,7 @@
 
             <!-- Fast 1-Click Identify & Auto-Enroll from Existing Records -->
             <div class="kiosk-quick-roster-select" style="margin-top:12px; text-align:left; border-top:1px solid var(--line); padding-top:12px;">
-              <small style="color:var(--muted); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:8px;">⚡ Auto-Recognize / 1-Click Link & Identify:</small>
+              <small style="color:var(--muted); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:8px;">Auto-Recognize / 1-Click Link & Identify:</small>
               <div class="kiosk-student-chips" id="kioskFastChips" style="display:flex; flex-wrap:wrap; gap:6px; max-height:120px; overflow-y:auto; padding-right:4px;"></div>
             </div>
 
@@ -731,7 +731,7 @@
             </div>
           </article>
           <article>
-            <div class="stat-icon violet">🛡</div>
+            <div class="stat-icon violet">⛨</div>
             <div>
               <p>Safe Absences Allowed</p>
               <h3>11</h3>
@@ -819,7 +819,7 @@
             <h2>My digital student ID badge</h2>
             <p>Use this QR badge for instant check-in at Face Kiosks & Scanner terminals</p>
           </div>
-          <button class="primary small" id="printBadgeBtn">🖨 Print / Save badge</button>
+          <button class="primary small" id="printBadgeBtn">Print / Save badge</button>
         </div>
 
         <div class="student-id-card-wrap">
@@ -1037,8 +1037,8 @@
               <span>I have obtained and verified informed student/guardian consent for local biometric template generation.</span>
             </label>
             <div class="enrol-actions">
-              <button class="primary small" id="captureProfile">📷 Capture Face from Camera</button>
-              <button class="outline small" id="autoEnrollSampleBtn">⚡ Enroll Sample Profile</button>
+              <button class="primary small" id="captureProfile">Capture Face from Camera</button>
+              <button class="outline small" id="autoEnrollSampleBtn">Enroll Sample Profile</button>
             </div>
           </div>
           <div class="enrol-preview-card" id="enrolPreviewCard">
@@ -1140,7 +1140,7 @@
   <div class="modal-backdrop" id="quickEnrollFaceModal">
     <div class="modal-card">
       <div class="modal-head">
-        <h3>📷 Enroll Student Face</h3>
+        <h3>Enroll Student Face</h3>
         <button class="modal-close" id="closeQuickEnrollModal">✕</button>
       </div>
       <div class="modal-form">
@@ -1163,7 +1163,7 @@
         <p style="font-size:12px; color:var(--muted); margin:4px 0 10px;">Stand in front of the camera and look directly at the screen.</p>
         <div class="modal-actions">
           <button class="outline" id="cancelQuickEnrollBtn">Cancel</button>
-          <button class="primary" id="confirmQuickEnrollBtn">📷 Capture & Enroll Face</button>
+          <button class="primary" id="confirmQuickEnrollBtn">Capture & Enroll Face</button>
         </div>
       </div>
     </div>
