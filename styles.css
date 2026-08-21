@@ -1,36 +1,36 @@
 :root {
-  --ink: #0f172a;
-  --ink-secondary: #334155;
-  --muted: #64748b;
-  --line: #e2e8f0;
-  --line-subtle: #f1f5f9;
-  --paper: #f8fafc;
+  --ink: #1c1917;
+  --ink-secondary: #44403c;
+  --muted: #78716c;
+  --line: #e6e1d5;
+  --line-subtle: #efece3;
+  --paper: #f7f4ed;
   --panel-bg: #ffffff;
-  --panel-bg-subtle: #f8fafc;
-  --sidebar-bg: #ffffff;
+  --panel-bg-subtle: #f0ede4;
+  --sidebar-bg: #faf8f3;
   --input-bg: #ffffff;
   --modal-card-bg: #ffffff;
-  --table-header-bg: #f8fafc;
-  --hover-bg: #f1f5f9;
+  --table-header-bg: #f0ede4;
+  --hover-bg: #eae6db;
   --green: #0d9488;
   --green-dark: #0f766e;
-  --green-light: #f0fdf4;
-  --green-border: #bbf7d0;
-  --lime: #ccfbf1;
-  --blue: #e0f2fe;
-  --blue-text: #0369a1;
-  --coral: #ffe4e6;
-  --coral-text: #be123c;
-  --gold: #fef3c7;
-  --gold-text: #b45309;
+  --green-light: #e6f4f1;
+  --green-border: #99d6cb;
+  --lime: #d6f4ee;
+  --blue: #ddedf9;
+  --blue-text: #0284c7;
+  --coral: #fce7eb;
+  --coral-text: #e11d48;
+  --gold: #fef0c7;
+  --gold-text: #d97706;
   --purple: #f3e8ff;
-  --purple-text: #7e22ce;
+  --purple-text: #9333ea;
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 16px;
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.07);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.08);
+  --shadow-sm: 0 1px 2px 0 rgb(28 25 23 / 0.04);
+  --shadow-md: 0 4px 6px -1px rgb(28 25 23 / 0.06), 0 2px 4px -2px rgb(28 25 23 / 0.04);
+  --shadow-lg: 0 10px 15px -3px rgb(28 25 23 / 0.08), 0 4px 6px -4px rgb(28 25 23 / 0.06);
 }
 
 [data-theme="dark"] {
@@ -87,7 +87,7 @@ body {
 /* SIDEBAR */
 .sidebar {
   width: 256px;
-  background: #ffffff;
+  background: var(--sidebar-bg);
   border-right: 1px solid var(--line);
   padding: 24px 16px 16px;
   display: flex;
@@ -105,7 +105,7 @@ body {
   font-size: 22px;
   font-weight: 700;
   padding: 0 8px 28px;
-  color: #0f172a;
+  color: var(--ink);
 }
 
 .brand-mark {
