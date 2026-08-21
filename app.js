@@ -2348,22 +2348,34 @@ function openQrScannerModal() {
 
 $("#closeQrModal")?.addEventListener("click", () => $("#qrModal")?.classList.remove("open"));
 
-// Add Student Modal
+// Add Student Modal Open/Close Handlers
 $("#addPersonBtn")?.addEventListener("click", () => $("#addPersonModal")?.classList.add("open"));
+$("#addStudentRosterBtn")?.addEventListener("click", () => $("#addPersonModal")?.classList.add("open"));
 $("#closePersonModal")?.addEventListener("click", () => $("#addPersonModal")?.classList.remove("open"));
 $("#cancelPersonBtn")?.addEventListener("click", () => $("#addPersonModal")?.classList.remove("open"));
 
 $("#savePersonBtn")?.addEventListener("click", async () => {
-  const name = $("#newPersonName")?.value.trim();
-  const id = $("#newPersonId")?.value.trim();
-  const dept = $("#newPersonClass")?.value || "CSE 3A";
+  const nameInput = $("#newPersonName");
+  const idInput = $("#newPersonId");
+  const classInput = $("#newPersonClass");
+
+  const name = nameInput?.value.trim();
+  const id = idInput?.value.trim();
+  const dept = classInput?.value || "CSE 3A";
 
   if (!name || !id) {
     toast("Please enter both Student Name and Roll ID");
     return;
   }
 
-  const initials = name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
+  const initials = name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+  const avatar = generateStudentAvatarSvg(name);
+
   const newStudent = {
     name,
     id,
@@ -2371,23 +2383,43 @@ $("#savePersonBtn")?.addEventListener("click", async () => {
     initials,
     rate: 100,
     status: "present",
-    time: new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }),
+    time: new Date().toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+    }),
+    photo: avatar,
   };
 
-  students.push(newStudent);
+  const existingIdx = students.findIndex((s) => s.id === id);
+  if (existingIdx >= 0) {
+    students[existingIdx] = { ...students[existingIdx], name, dept, initials, photo: avatar };
+  } else {
+    students.push(newStudent);
+  }
+
   storage.set("attendlyStudents", students);
   renderRoster();
+  updateRosterSummary();
   renderPeopleDirectory();
+  populateKioskFastChips();
+
+  // Clear modal inputs & close
+  if (nameInput) nameInput.value = "";
+  if (idInput) idInput.value = "";
   $("#addPersonModal")?.classList.remove("open");
-  toast(`Student ${name} added successfully`);
+
+  toast(`Student ${name} (${id}) added successfully`);
   playSound("success");
 
-  // Save to MongoDB Cloud
+  // Save to MongoDB Cloud Database
   await api.enrollStudent({
     name,
     rollNo: id,
     classId: dept,
-    avatar: newStudent.photo || "",
+    department: dept,
+    avatar,
+    attendanceRate: 100,
+    consentGiven: true,
   });
 });
 

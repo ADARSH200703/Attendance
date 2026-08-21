@@ -199,7 +199,16 @@ async function handleRequest(req, res) {
       if (isMongoConnected && Student) {
         const student = await Student.findOneAndUpdate(
           { rollNo },
-          { name, rollNo, classId: classId || "CSE 3A", avatar: avatar || "", faceDescriptor: faceDescriptor || [], consentGiven: consentGiven !== false },
+          {
+            name,
+            rollNo,
+            classId: classId || "CSE 3A",
+            department: classId || "CSE",
+            avatar: avatar || "",
+            faceDescriptor: faceDescriptor || [],
+            consentGiven: consentGiven !== false,
+            attendanceRate: 100,
+          },
           { upsert: true, new: true }
         );
         return sendJson(res, 200, { success: true, student });
@@ -207,7 +216,7 @@ async function handleRequest(req, res) {
 
       // In-Memory Update
       const idx = inMemoryDB.students.findIndex((s) => s.rollNo === rollNo);
-      const newStudent = { name, rollNo, classId: classId || "CSE 3A", avatar: avatar || "", faceDescriptor: faceDescriptor || [], consentGiven: consentGiven !== false, attendanceRate: 88 };
+      const newStudent = { name, rollNo, classId: classId || "CSE 3A", department: classId || "CSE", avatar: avatar || "", faceDescriptor: faceDescriptor || [], consentGiven: consentGiven !== false, attendanceRate: 100 };
       if (idx >= 0) inMemoryDB.students[idx] = newStudent;
       else inMemoryDB.students.push(newStudent);
 
