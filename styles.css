@@ -34,35 +34,35 @@
 }
 
 [data-theme="dark"] {
-  --ink: #f8fafc;
-  --ink-secondary: #cbd5e1;
-  --muted: #94a3b8;
+  --ink: #f4f4f5;
+  --ink-secondary: #d4d4d8;
+  --muted: #a1a1aa;
   --line: rgba(255, 255, 255, 0.08);
   --line-subtle: rgba(255, 255, 255, 0.04);
-  --paper: #070a12;
-  --panel-bg: #0d1424;
-  --panel-bg-subtle: #111a2e;
-  --sidebar-bg: #090e1a;
-  --input-bg: #131d31;
-  --modal-card-bg: #0d1424;
-  --table-header-bg: #111a2e;
-  --hover-bg: #172238;
+  --paper: #0c0c0c;
+  --panel-bg: #141414;
+  --panel-bg-subtle: #191919;
+  --sidebar-bg: #111111;
+  --input-bg: #181818;
+  --modal-card-bg: #141414;
+  --table-header-bg: #181818;
+  --hover-bg: #222222;
   --green: #14b8a6;
   --green-dark: #0d9488;
-  --green-light: rgba(20, 184, 166, 0.16);
+  --green-light: rgba(20, 184, 166, 0.14);
   --green-border: rgba(20, 184, 166, 0.28);
-  --lime: rgba(45, 212, 191, 0.16);
-  --blue: rgba(56, 189, 248, 0.16);
+  --lime: rgba(45, 212, 191, 0.14);
+  --blue: rgba(56, 189, 248, 0.14);
   --blue-text: #38bdf8;
-  --coral: rgba(244, 63, 94, 0.16);
+  --coral: rgba(244, 63, 94, 0.14);
   --coral-text: #fb7185;
-  --gold: rgba(245, 158, 11, 0.16);
+  --gold: rgba(245, 158, 11, 0.14);
   --gold-text: #fbbf24;
-  --purple: rgba(168, 85, 247, 0.16);
+  --purple: rgba(168, 85, 247, 0.14);
   --purple-text: #c084fc;
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.4);
-  --shadow-md: 0 4px 12px -1px rgb(0 0 0 / 0.5);
-  --shadow-lg: 0 12px 24px -3px rgb(0 0 0 / 0.6);
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.6);
+  --shadow-md: 0 4px 12px -1px rgb(0 0 0 / 0.7);
+  --shadow-lg: 0 12px 24px -3px rgb(0 0 0 / 0.8);
 }
 
 * {
@@ -2883,7 +2883,7 @@ select option {
 }
 
 [data-theme="dark"] .sidebar-theme-wrap {
-  background: #111a2e;
+  background: #181818;
   border-color: rgba(255, 255, 255, 0.1);
 }
 
@@ -2893,8 +2893,8 @@ select option {
 }
 
 [data-theme="dark"] .sidebar-theme-select option {
-  background: #0d1424 !important;
-  color: #f8fafc !important;
+  background: #181818 !important;
+  color: #f4f4f5 !important;
 }
 
 /* ==========================================================================
