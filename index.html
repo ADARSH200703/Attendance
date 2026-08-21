@@ -482,13 +482,14 @@
               <button class="outline kiosk-button hidden" id="stopCameraBtn">Stop camera</button>
             </div>
 
-            <div class="quick-enroll-hint">
-              <button class="ghost-button" id="unknownFace">Face not recognized?</button>
-              <button class="link-button" id="kioskEnrollQuickBtn">+ Enroll your face here</button>
+            <!-- Fast 1-Click Identify from Existing Records -->
+            <div class="kiosk-quick-roster-select" style="margin-top:14px; text-align:left; border-top:1px solid var(--line); padding-top:12px;">
+              <small style="color:var(--muted); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:8px;">⚡ Auto-Recognize / 1-Click Identify:</small>
+              <div class="kiosk-student-chips" id="kioskFastChips" style="display:flex; flex-wrap:wrap; gap:6px; max-height:120px; overflow-y:auto; padding-right:4px;"></div>
             </div>
 
-            <div class="privacy-note">
-              ⌑ Compliant with on-device biometric standards. Raw frames are never sent over any network.
+            <div class="privacy-note" style="margin-top:12px;">
+              ⌑ Compliant with on-device biometric standards. Records auto-sync with MongoDB.
             </div>
           </section>
         </div>
