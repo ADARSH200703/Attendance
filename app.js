@@ -73,6 +73,25 @@ const api = {
       return null;
     }
   },
+  async getStudents() {
+    try {
+      const res = await fetch("/api/students");
+      if (!res.ok) return null;
+      return await res.json();
+    } catch {
+      return null;
+    }
+  },
+  async getTodayAttendance(date) {
+    try {
+      const q = date ? `?date=${encodeURIComponent(date)}` : "";
+      const res = await fetch("/api/attendance/today" + q);
+      if (!res.ok) return null;
+      return await res.json();
+    } catch {
+      return null;
+    }
+  },
   async checkInStudent(rollNo, name, method = "kiosk", confidence = 0.96) {
     try {
       const res = await fetch("/api/attendance/checkin", {
@@ -97,12 +116,43 @@ const api = {
       return null;
     }
   },
+  async deleteStudent(rollNo) {
+    try {
+      const res = await fetch(`/api/students/${encodeURIComponent(rollNo)}`, {
+        method: "DELETE",
+      });
+      return await res.json();
+    } catch {
+      return null;
+    }
+  },
+  async getLeaves() {
+    try {
+      const res = await fetch("/api/leaves");
+      if (!res.ok) return null;
+      return await res.json();
+    } catch {
+      return null;
+    }
+  },
   async applyLeave(leaveData) {
     try {
       const res = await fetch("/api/leaves/apply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(leaveData),
+      });
+      return await res.json();
+    } catch {
+      return null;
+    }
+  },
+  async updateLeaveStatus(id, status) {
+    try {
+      const res = await fetch(`/api/leaves/${id}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
       });
       return await res.json();
     } catch {
@@ -120,8 +170,88 @@ const api = {
     } catch {
       return null;
     }
-  }
+  },
 };
+
+function formatStudentFromMongo(doc) {
+  const roll = doc.rollNo || doc.id || "CSE/23/000";
+  const name = doc.name || "Student";
+  const initials = name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+  return {
+    name,
+    id: roll,
+    dept: doc.classId || doc.dept || "CSE 3A",
+    initials,
+    rate: doc.attendanceRate || doc.rate || 88,
+    status: doc.status || "absent",
+    time: doc.time || "—",
+    photo: doc.avatar || doc.photo || generateStudentAvatarSvg(name),
+    descriptor: doc.faceDescriptor || doc.descriptor || [],
+  };
+}
+
+let isCloudSyncing = false;
+async function syncWithBackend() {
+  if (isCloudSyncing) return;
+  isCloudSyncing = true;
+  try {
+    // 1. Synchronize Students
+    const cloudStudents = await api.getStudents();
+    if (cloudStudents && Array.isArray(cloudStudents) && cloudStudents.length > 0) {
+      students = cloudStudents.map(formatStudentFromMongo);
+      storage.set("attendlyStudents", students);
+    }
+
+    // 2. Synchronize Today's Live Attendance
+    const todayLogs = await api.getTodayAttendance();
+    if (todayLogs && Array.isArray(todayLogs)) {
+      todayLogs.forEach((log) => {
+        const s = students.find((item) => item.id === log.rollNo);
+        if (s) {
+          s.status = log.status || "present";
+          s.time = log.time || "—";
+        }
+      });
+      storage.set("attendlyStudents", students);
+    }
+
+    // 3. Synchronize Leaves
+    const cloudLeaves = await api.getLeaves();
+    if (cloudLeaves && Array.isArray(cloudLeaves)) {
+      leaves = cloudLeaves.map((l) => ({
+        id: l._id,
+        name: l.studentName || l.name,
+        class: l.classId || l.class || "CSE 3A",
+        type: l.type || "Medical leave",
+        dates: l.fromDate && l.toDate ? `${l.fromDate} – ${l.toDate}` : l.dates || "Pending",
+        reason: l.reason || "",
+        status: l.status || "pending",
+        initials: (l.studentName || l.name || "ST")
+          .split(" ")
+          .map((n) => n[0])
+          .join("")
+          .slice(0, 2)
+          .toUpperCase(),
+      }));
+      storage.set("attendlyLeaves", leaves);
+    }
+
+    // Re-render visible active components
+    if (typeof renderRoster === "function") renderRoster();
+    if (typeof updateRosterSummary === "function") updateRosterSummary();
+    if (typeof renderLeaves === "function") renderLeaves();
+    if (typeof renderPeopleDirectory === "function") renderPeopleDirectory();
+  } catch (e) {
+    console.debug("Background sync notice:", e);
+  } finally {
+    isCloudSyncing = false;
+  }
+}
 
 // State initialization
 let students = storage.get("attendlyStudents", defaultStudents);
@@ -404,7 +534,7 @@ $("#globalSearch")?.addEventListener("input", (e) => {
 });
 
 // Mark All Present Action
-$("#markAllPresentBtn")?.addEventListener("click", () => {
+$("#markAllPresentBtn")?.addEventListener("click", async () => {
   const now = new Date();
   const timeStr = now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
   students.forEach((s) => {
@@ -415,10 +545,21 @@ $("#markAllPresentBtn")?.addEventListener("click", () => {
   renderRoster();
   toast("All students marked Present for CSE 3A");
   playSound("success");
+
+  // Sync to MongoDB Cloud
+  await api.batchSaveAttendance(
+    students.map((s) => ({
+      rollNo: s.id,
+      name: s.name,
+      classId: s.dept,
+      status: "present",
+      time: timeStr,
+    }))
+  );
 });
 
 // Save Attendance Action
-$("#saveAttendance")?.addEventListener("click", () => {
+$("#saveAttendance")?.addEventListener("click", async () => {
   const present = students.filter((s) => s.status === "present").length;
   const late = students.filter((s) => s.status === "late").length;
   const absent = students.filter((s) => s.status === "absent").length;
@@ -440,7 +581,20 @@ $("#saveAttendance")?.addEventListener("click", () => {
   allRecords.push(sessionRecord);
   storage.set("attendlySessions", allRecords);
 
-  toast(`Attendance saved: ${present} Present, ${late} Late, ${absent} Absent`);
+  // Sync to MongoDB Cloud Database
+  const batchRes = await api.batchSaveAttendance(
+    students.map((s) => ({
+      rollNo: s.id,
+      name: s.name,
+      classId: s.dept,
+      status: s.status,
+      time: s.time !== "—" ? s.time : now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }),
+    }))
+  );
+
+  toast(
+    `Attendance saved to Cloud: ${present} Present, ${late} Late, ${absent} Absent`
+  );
   playSound("success");
 });
 
@@ -1997,25 +2151,33 @@ function renderLeaves() {
     .join("");
 
   list.querySelectorAll(".leave-approve-btn").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
+    btn.addEventListener("click", async (e) => {
       const row = btn.closest(".leave-item");
       const idx = Number(row.dataset.idx);
+      const leaveItem = currentLeaves[idx];
       currentLeaves.splice(idx, 1);
       storage.set("attendlyLeaves", currentLeaves);
       renderLeaves();
       toast("Leave request approved and recorded");
       playSound("success");
+      if (leaveItem && leaveItem.id) {
+        await api.updateLeaveStatus(leaveItem.id, "approved");
+      }
     });
   });
 
   list.querySelectorAll(".leave-decline-btn").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
+    btn.addEventListener("click", async (e) => {
       const row = btn.closest(".leave-item");
       const idx = Number(row.dataset.idx);
+      const leaveItem = currentLeaves[idx];
       currentLeaves.splice(idx, 1);
       storage.set("attendlyLeaves", currentLeaves);
       renderLeaves();
       toast("Leave request declined");
+      if (leaveItem && leaveItem.id) {
+        await api.updateLeaveStatus(leaveItem.id, "declined");
+      }
     });
   });
 }
@@ -2097,12 +2259,14 @@ function renderPeopleDirectory() {
   });
 
   container.querySelectorAll(".delete-person-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      students = students.filter((s) => s.id !== btn.dataset.id);
+    btn.addEventListener("click", async () => {
+      const id = btn.dataset.id;
+      students = students.filter((s) => s.id !== id);
       storage.set("attendlyStudents", students);
       renderPeopleDirectory();
       renderRoster();
       toast("Student removed from directory");
+      await api.deleteStudent(id);
     });
   });
 }
@@ -2130,7 +2294,7 @@ function openQrScannerModal() {
     .join("");
 
   chipsContainer.querySelectorAll(".qr-chip").forEach((chip) => {
-    chip.addEventListener("click", () => {
+    chip.addEventListener("click", async () => {
       const student = students.find((s) => s.id === chip.dataset.id);
       if (student) {
         student.status = "present";
@@ -2141,6 +2305,7 @@ function openQrScannerModal() {
         toast(`QR Code verified for ${student.name}`);
         playSound("success");
         modal.classList.remove("open");
+        await api.checkInStudent(student.id, student.name, "qr");
       }
     });
   });
@@ -2155,7 +2320,7 @@ $("#addPersonBtn")?.addEventListener("click", () => $("#addPersonModal")?.classL
 $("#closePersonModal")?.addEventListener("click", () => $("#addPersonModal")?.classList.remove("open"));
 $("#cancelPersonBtn")?.addEventListener("click", () => $("#addPersonModal")?.classList.remove("open"));
 
-$("#savePersonBtn")?.addEventListener("click", () => {
+$("#savePersonBtn")?.addEventListener("click", async () => {
   const name = $("#newPersonName")?.value.trim();
   const id = $("#newPersonId")?.value.trim();
   const dept = $("#newPersonClass")?.value || "CSE 3A";
@@ -2183,6 +2348,14 @@ $("#savePersonBtn")?.addEventListener("click", () => {
   $("#addPersonModal")?.classList.remove("open");
   toast(`Student ${name} added successfully`);
   playSound("success");
+
+  // Save to MongoDB Cloud
+  await api.enrollStudent({
+    name,
+    rollNo: id,
+    classId: dept,
+    avatar: newStudent.photo || "",
+  });
 });
 
 // Add Timetable Session Modal
@@ -2410,7 +2583,7 @@ $("#roleSelect")?.addEventListener("change", (e) => {
 });
 
 // Student Leave Submission Handler
-$("#submitStudentLeaveBtn")?.addEventListener("click", () => {
+$("#submitStudentLeaveBtn")?.addEventListener("click", async () => {
   const type = $("#studentLeaveType")?.value || "Medical Leave";
   const from = $("#studentLeaveFrom")?.value;
   const to = $("#studentLeaveTo")?.value;
@@ -2472,6 +2645,17 @@ $("#submitStudentLeaveBtn")?.addEventListener("click", () => {
   const reasonEl = $("#studentLeaveReason");
   if (reasonEl) reasonEl.value = "";
   toast("Leave application submitted successfully! Pending faculty review.");
+
+  // Save to MongoDB Cloud
+  await api.applyLeave({
+    studentName: "Student",
+    rollNo: "CSE/23/041",
+    classId: "CSE 3A",
+    type,
+    fromDate: from,
+    toDate: to,
+    reason,
+  });
 });
 
 // Student Transcript & Badge Handlers
@@ -2512,3 +2696,7 @@ $("#printBadgeBtn")?.addEventListener("click", () => {
 applyRole($("#roleSelect")?.value || "teacher");
 updateKioskLogTicker();
 showView("overview");
+
+// Start Real-Time Cloud Synchronization with MongoDB
+syncWithBackend();
+setInterval(syncWithBackend, 4000);

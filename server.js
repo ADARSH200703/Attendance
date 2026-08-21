@@ -217,6 +217,20 @@ async function handleRequest(req, res) {
     }
   }
 
+  if (pathname.startsWith("/api/students/") && method === "DELETE") {
+    try {
+      const rollNo = decodeURIComponent(pathname.replace("/api/students/", ""));
+      if (isMongoConnected && Student) {
+        await Student.findOneAndDelete({ rollNo });
+        return sendJson(res, 200, { success: true, message: "Student removed" });
+      }
+      inMemoryDB.students = inMemoryDB.students.filter((s) => s.rollNo !== rollNo);
+      return sendJson(res, 200, { success: true, message: "Student removed" });
+    } catch (err) {
+      return sendJson(res, 500, { error: err.message });
+    }
+  }
+
   // 3. Biometric Check-In (Face Kiosk / QR Verification)
   if (pathname === "/api/attendance/checkin" && method === "POST") {
     try {
