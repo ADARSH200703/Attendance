@@ -77,6 +77,27 @@ const defaultLeaves = [
   },
 ];
 
+const defaultStudentLeaveHistory = [
+  {
+    id: "student-leave-sample-1",
+    type: "Medical Leave",
+    dates: "14 Aug – 15 Aug 2026",
+    reason: "Viral fever & doctor consultation",
+    days: "2 days",
+    status: "approved",
+    appliedAt: "14 Aug 2026",
+  },
+  {
+    id: "student-leave-sample-2",
+    type: "Academic / Hackathon",
+    dates: "02 Jul – 04 Jul 2026",
+    reason: "Smart India Hackathon Zonal Round",
+    days: "3 days",
+    status: "approved",
+    appliedAt: "02 Jul 2026",
+  },
+];
+
 const defaultNotifications = [
   {
     id: "notif-kiosk-1",
@@ -527,7 +548,11 @@ function showView(viewId) {
   const titleEl = $("#pageTitle");
   if (titleEl) titleEl.textContent = titles[viewId] || "Attendly";
 
-  if (viewId === "overview") renderOverviewBars($("#overviewWeekSelect")?.value || "this");
+  if (viewId === "overview") {
+    renderOverviewBars($("#overviewWeekSelect")?.value || "this");
+    renderStudentLeaveHistory();
+  }
+  if (viewId === "student-leaves") renderStudentLeaveHistory();
   if (viewId === "attendance") renderRoster();
   if (viewId === "timetable") renderTimetable();
   if (viewId === "reports") renderReportSummary("class");
@@ -2470,6 +2495,53 @@ let currentLeaves = storage.get("attendlyLeaves", defaultLeaves);
 let currentNotifications = storage.get("attendlyNotifications", defaultNotifications);
 let leaveActiveFilter = "all";
 
+function renderStudentLeaveHistory() {
+  const list = $("#studentLeaveHistoryList");
+  const history = storage.get("attendlyStudentLeaveHistory", defaultStudentLeaveHistory);
+
+  // Update Student Overview Stat: active/pending leaves
+  const studentActiveLeavesCount = $("#studentActiveLeavesCount");
+  const pendingCount = history.filter((l) => l.status === "pending").length;
+  if (studentActiveLeavesCount) {
+    studentActiveLeavesCount.textContent = pendingCount;
+  }
+
+  if (!list) return;
+
+  if (history.length === 0) {
+    list.innerHTML = `
+      <div style="padding: 24px; text-align: center; color: var(--muted); font-size: 13px;">
+        <p style="margin:0;">No leave applications found.</p>
+      </div>
+    `;
+    return;
+  }
+
+  list.innerHTML = history
+    .map((item) => {
+      let tagHtml = "";
+      if (item.status === "approved") {
+        tagHtml = `<span class="tag-chip green">✓ Approved</span>`;
+      } else if (item.status === "declined" || item.status === "rejected") {
+        tagHtml = `<span class="tag-chip red">✕ Declined</span>`;
+      } else {
+        tagHtml = `<span class="tag-chip orange">⏳ Pending Approval</span>`;
+      }
+
+      return `
+        <div class="leave-history-item" data-id="${escapeHtml(item.id)}">
+          <div>
+            <strong>${escapeHtml(item.type)}</strong>
+            <p>${escapeHtml(item.reason)} ${item.days ? `· ${escapeHtml(item.days)}` : ""}</p>
+            <small>${escapeHtml(item.dates)}</small>
+          </div>
+          ${tagHtml}
+        </div>
+      `;
+    })
+    .join("");
+}
+
 function processLeaveDecision(leaveId, action) {
   currentLeaves = storage.get("attendlyLeaves", defaultLeaves);
   currentNotifications = storage.get("attendlyNotifications", defaultNotifications);
@@ -2490,6 +2562,20 @@ function processLeaveDecision(leaveId, action) {
   if (leaveItem && leaveItem.name && !resolvedIds.includes(leaveItem.name)) resolvedIds.push(leaveItem.name);
   storage.set("attendlyResolvedLeaveIds", resolvedIds);
 
+  // Synchronize with Student's Personal Leave History
+  const studentHistory = storage.get("attendlyStudentLeaveHistory", defaultStudentLeaveHistory);
+  let historyChanged = false;
+  studentHistory.forEach((h) => {
+    if (h.id === leaveId || (leaveItem && (leaveItem.id === h.id || (leaveItem.name === "Student" && h.status === "pending")))) {
+      h.status = action; // "approved" or "declined"
+      historyChanged = true;
+    }
+  });
+  if (historyChanged) {
+    storage.set("attendlyStudentLeaveHistory", studentHistory);
+    renderStudentLeaveHistory();
+  }
+
   // Remove corresponding leave notification(s) from notification center
   currentNotifications = currentNotifications.filter((n) => {
     if (n.leaveId && n.leaveId === leaveId) return false;
@@ -2499,9 +2585,10 @@ function processLeaveDecision(leaveId, action) {
   });
   storage.set("attendlyNotifications", currentNotifications);
 
-  // Update both the Leave requests view and Notification Bell dropdown
+  // Update both the Leave requests view, student history, and Notification Bell dropdown
   renderLeaves();
   renderNotifications();
+  renderStudentLeaveHistory();
 
   // If student was in the Overview Attention list (e.g. Priya Mehta), update Attention list
   const attentionItems = $$("#attentionGrid .attention-item");
@@ -4274,24 +4361,24 @@ $("#submitStudentLeaveBtn")?.addEventListener("click", async () => {
     return;
   }
 
-  const list = $("#studentLeaveHistoryList");
-  if (list) {
-    const newItem = document.createElement("div");
-    newItem.className = "leave-history-item";
-    newItem.innerHTML = `
-      <div>
-        <strong>${escapeHtml(type)}</strong>
-        <p>${escapeHtml(reason)}</p>
-        <small>${from} – ${to}</small>
-      </div>
-      <span class="tag-chip orange">⏳ Pending Approval</span>
-    `;
-    list.prepend(newItem);
-  }
-
-  // Add new leave to central data store
   const newLeaveId = "leave-" + Date.now();
-  const newLeave = {
+
+  // 1. Add to Student's Personal Persistent Leave History
+  const newStudentLeave = {
+    id: newLeaveId,
+    type,
+    dates: `${from} – ${to}`,
+    days: "1–3 days",
+    reason,
+    status: "pending",
+    appliedAt: "Just now",
+  };
+  const history = storage.get("attendlyStudentLeaveHistory", defaultStudentLeaveHistory);
+  history.unshift(newStudentLeave);
+  storage.set("attendlyStudentLeaveHistory", history);
+
+  // 2. Add to Teacher / Faculty Review Roster
+  const newFacultyLeave = {
     id: newLeaveId,
     name: "Student",
     rollNo: "CSE/23/041",
@@ -4306,10 +4393,10 @@ $("#submitStudentLeaveBtn")?.addEventListener("click", async () => {
   };
 
   currentLeaves = storage.get("attendlyLeaves", defaultLeaves);
-  currentLeaves.unshift(newLeave);
+  currentLeaves.unshift(newFacultyLeave);
   storage.set("attendlyLeaves", currentLeaves);
 
-  // Add matching notification to notification bell
+  // 3. Add matching notification to notification bell
   const newNotif = {
     id: "notif-" + Date.now(),
     category: "leave",
@@ -4327,14 +4414,9 @@ $("#submitStudentLeaveBtn")?.addEventListener("click", async () => {
   currentNotifications.unshift(newNotif);
   storage.set("attendlyNotifications", currentNotifications);
 
+  renderStudentLeaveHistory();
   renderLeaves();
   renderNotifications();
-
-  // Update student active leaves count
-  const studentActive = $("#studentActiveLeavesCount");
-  if (studentActive) {
-    studentActive.textContent = parseInt(studentActive.textContent || "0") + 1;
-  }
 
   // Reset form
   const reasonEl = $("#studentLeaveReason");
@@ -4393,6 +4475,7 @@ $("#printBadgeBtn")?.addEventListener("click", () => {
 // Initial View & Role Setup
 applyRole($("#roleSelect")?.value || "teacher");
 updateKioskLogTicker();
+renderStudentLeaveHistory();
 showView("overview");
 
 // Start Real-Time Cloud Synchronization with MongoDB
