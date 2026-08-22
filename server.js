@@ -348,10 +348,11 @@ async function handleRequest(req, res) {
   if (pathname === "/api/leaves" && method === "GET") {
     try {
       if (isMongoConnected && Leave) {
-        const leaves = await Leave.find().sort({ createdAt: -1 });
+        const leaves = await Leave.find({ status: "pending" }).sort({ createdAt: -1 });
         return sendJson(res, 200, leaves);
       }
-      return sendJson(res, 200, inMemoryDB.leaves);
+      const pendingInMemory = (inMemoryDB.leaves || []).filter((l) => l.status === "pending" || !l.status);
+      return sendJson(res, 200, pendingInMemory);
     } catch (err) {
       return sendJson(res, 500, { error: err.message });
     }
@@ -386,13 +387,15 @@ async function handleRequest(req, res) {
       const { status } = body;
 
       if (isMongoConnected && Leave) {
-        const leave = await Leave.findByIdAndUpdate(id, { status }, { new: true });
-        return sendJson(res, 200, { success: true, leave });
+        if (mongoose.Types.ObjectId.isValid(id)) {
+          const leave = await Leave.findByIdAndUpdate(id, { status }, { new: true });
+          return sendJson(res, 200, { success: true, leave });
+        }
       }
 
-      const idx = inMemoryDB.leaves.findIndex((l) => l._id === id);
+      const idx = (inMemoryDB.leaves || []).findIndex((l) => l._id === id || l.rollNo === id || l.studentName === id);
       if (idx >= 0) inMemoryDB.leaves[idx].status = status;
-      return sendJson(res, 200, { success: true, leave: inMemoryDB.leaves[idx] });
+      return sendJson(res, 200, { success: true, status });
     } catch (err) {
       return sendJson(res, 500, { error: err.message });
     }

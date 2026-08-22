@@ -343,31 +343,56 @@ async function syncWithBackend() {
       storage.set("attendlyStudents", students);
     }
 
-    // 3. Synchronize Leaves
+    // 3. Synchronize Leaves (Only truly pending, non-resolved leaves)
     const cloudLeaves = await api.getLeaves();
     if (cloudLeaves && Array.isArray(cloudLeaves)) {
-      leaves = cloudLeaves.map((l) => ({
-        id: l._id,
-        name: l.studentName || l.name,
-        class: l.classId || l.class || "CSE 3A",
-        type: l.type || "Medical leave",
-        dates: l.fromDate && l.toDate ? `${l.fromDate} – ${l.toDate}` : l.dates || "Pending",
-        reason: l.reason || "",
-        status: l.status || "pending",
-        initials: (l.studentName || l.name || "ST")
-          .split(" ")
-          .map((n) => n[0])
-          .join("")
-          .slice(0, 2)
-          .toUpperCase(),
-      }));
-      storage.set("attendlyLeaves", leaves);
+      const resolvedIds = storage.get("attendlyResolvedLeaveIds", []);
+      const localLeaves = storage.get("attendlyLeaves", defaultLeaves);
+      let updatedLocal = [...localLeaves];
+      let hasNewLeaves = false;
+
+      cloudLeaves.forEach((l) => {
+        const clId = l._id || l.id;
+        const clName = l.studentName || l.name;
+        if (l.status && l.status !== "pending") return;
+        if (clId && resolvedIds.includes(clId)) return;
+        if (clName && resolvedIds.includes(clName)) return;
+
+        const alreadyExists = updatedLocal.some((item) => (item.id && item.id === clId) || (item.name && item.name === clName));
+        if (!alreadyExists) {
+          updatedLocal.unshift({
+            id: clId || "leave-" + Date.now(),
+            name: clName,
+            rollNo: l.rollNo || "",
+            class: l.classId || l.class || "CSE 3A",
+            type: l.type || "Medical Leave",
+            dates: l.fromDate && l.toDate ? `${l.fromDate} – ${l.toDate}` : l.dates || "Pending",
+            days: l.days || "1–3 days",
+            reason: l.reason || "Submitted leave request",
+            status: "pending",
+            initials: (clName || "ST")
+              .split(" ")
+              .map((n) => n[0])
+              .join("")
+              .slice(0, 2)
+              .toUpperCase(),
+            submittedTime: "Recently",
+          });
+          hasNewLeaves = true;
+        }
+      });
+
+      if (hasNewLeaves) {
+        storage.set("attendlyLeaves", updatedLocal);
+        currentLeaves = updatedLocal;
+        if (typeof renderLeaves === "function") renderLeaves();
+        if (typeof renderNotifications === "function") renderNotifications();
+      }
     }
 
     // Re-render visible active components
     if (typeof renderRoster === "function") renderRoster();
     if (typeof updateRosterSummary === "function") updateRosterSummary();
-    if (typeof renderLeaves === "function") renderLeaves();
     if (typeof renderPeopleDirectory === "function") renderPeopleDirectory();
     if (typeof populateKioskFastChips === "function") populateKioskFastChips();
   } catch (e) {
@@ -2448,6 +2473,7 @@ let leaveActiveFilter = "all";
 function processLeaveDecision(leaveId, action) {
   currentLeaves = storage.get("attendlyLeaves", defaultLeaves);
   currentNotifications = storage.get("attendlyNotifications", defaultNotifications);
+  const resolvedIds = storage.get("attendlyResolvedLeaveIds", []);
 
   const leaveIdx = currentLeaves.findIndex((l) => l.id === leaveId || l.name === leaveId);
   let leaveItem = null;
@@ -2457,6 +2483,12 @@ function processLeaveDecision(leaveId, action) {
     currentLeaves.splice(leaveIdx, 1);
     storage.set("attendlyLeaves", currentLeaves);
   }
+
+  // Permanently blacklist resolved leave identifiers so background sync never resurrects them
+  if (leaveId && !resolvedIds.includes(leaveId)) resolvedIds.push(leaveId);
+  if (leaveItem && leaveItem.id && !resolvedIds.includes(leaveItem.id)) resolvedIds.push(leaveItem.id);
+  if (leaveItem && leaveItem.name && !resolvedIds.includes(leaveItem.name)) resolvedIds.push(leaveItem.name);
+  storage.set("attendlyResolvedLeaveIds", resolvedIds);
 
   // Remove corresponding leave notification(s) from notification center
   currentNotifications = currentNotifications.filter((n) => {
@@ -4365,4 +4397,4 @@ showView("overview");
 
 // Start Real-Time Cloud Synchronization with MongoDB
 syncWithBackend();
-setInterval(syncWithBackend, 4000);
+setInterval(syncWithBackend, 30000);
