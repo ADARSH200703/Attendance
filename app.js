@@ -3953,7 +3953,18 @@ function renderNotifications() {
 
   // Update tab counts
   const tabAll = $(`[data-notif-filter="all"]`);
+  const tabKiosk = $(`[data-notif-filter="kiosk"]`);
+  const tabLeaves = $(`[data-notif-filter="leave"]`);
+  const tabAlerts = $(`[data-notif-filter="alert"]`);
+
+  const kioskCount = currentNotifications.filter((n) => n.category === "kiosk").length;
+  const leaveCount = currentNotifications.filter((n) => n.category === "leave").length;
+  const alertCount = currentNotifications.filter((n) => n.category === "alert").length;
+
   if (tabAll) tabAll.textContent = `All (${currentNotifications.length})`;
+  if (tabKiosk) tabKiosk.textContent = `Biometric (${kioskCount})`;
+  if (tabLeaves) tabLeaves.textContent = `Leaves (${leaveCount})`;
+  if (tabAlerts) tabAlerts.textContent = `Alerts (${alertCount})`;
 
   const filtered = currentNotifications.filter((n) => {
     if (activeNotifFilter === "all") return true;
@@ -3962,9 +3973,9 @@ function renderNotifications() {
 
   if (filtered.length === 0) {
     notifListEl.innerHTML = `
-      <div style="padding:32px 20px; text-align:center; color:var(--muted); font-size:12.5px;">
-        <div style="font-size:24px; margin-bottom:6px;">✨</div>
-        <strong>No notifications</strong>
+      <div style="padding:36px 20px; text-align:center; color:var(--muted); font-size:12.5px;">
+        <div style="font-size:26px; margin-bottom:6px;">✨</div>
+        <strong style="color:var(--ink);">No notifications</strong>
         <p style="margin:4px 0 0; font-size:11px;">You're all caught up with your classes and attendance logs.</p>
       </div>
     `;
@@ -4001,7 +4012,10 @@ function renderNotifications() {
           <div class="notif-content">
             <div class="notif-row-top">
               <strong>${escapeHtml(n.title)}</strong>
-              <time>${escapeHtml(n.time || "Just now")}</time>
+              <div style="display:flex; align-items:center;">
+                <time>${escapeHtml(n.time || "Just now")}</time>
+                <button class="notif-dismiss-btn" data-id="${escapeHtml(n.id)}" title="Dismiss notification">✕</button>
+              </div>
             </div>
             <p>${escapeHtml(n.message)}</p>
             ${actionsHtml}
@@ -4025,6 +4039,32 @@ function renderNotifications() {
       e.stopPropagation();
       const leaveId = btn.dataset.leaveId;
       processLeaveDecision(leaveId, "declined");
+    });
+  });
+
+  // Attach single dismiss button listeners
+  notifListEl.querySelectorAll(".notif-dismiss-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const notifId = btn.dataset.id;
+      currentNotifications = storage.get("attendlyNotifications", defaultNotifications);
+      currentNotifications = currentNotifications.filter((n) => n.id !== notifId);
+      storage.set("attendlyNotifications", currentNotifications);
+      renderNotifications();
+    });
+  });
+
+  // Click on unread notification marks it as read
+  notifListEl.querySelectorAll(".notif-item.unread").forEach((item) => {
+    item.addEventListener("click", () => {
+      const notifId = item.dataset.id;
+      currentNotifications = storage.get("attendlyNotifications", defaultNotifications);
+      const targetNotif = currentNotifications.find((n) => n.id === notifId);
+      if (targetNotif) {
+        targetNotif.unread = false;
+        storage.set("attendlyNotifications", currentNotifications);
+        renderNotifications();
+      }
     });
   });
 
