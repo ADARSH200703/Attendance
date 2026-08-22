@@ -1218,10 +1218,21 @@
         </label>
         <label>Time Slot
           <select id="newSessionTime">
-            <option value="09:00">09:00 – 10:00 AM</option>
-            <option value="10:00">10:00 – 11:00 AM</option>
-            <option value="11:15">11:15 – 12:15 PM</option>
-            <option value="14:15">02:15 – 03:15 PM</option>
+            <option value="09:00">09:00 – 10:00 AM (Lecture)</option>
+            <option value="10:00">10:00 – 11:00 AM (Lecture)</option>
+            <option value="11:15">11:15 – 12:15 PM (Lecture)</option>
+            <option value="12:15">12:15 – 01:15 PM (Lecture)</option>
+            <option value="13:15">01:15 – 02:15 PM (Lecture)</option>
+            <option value="14:15">02:15 – 03:15 PM (Lecture)</option>
+            <option value="14:15-lab">02:15 – 04:15 PM (Practical Lab · 2 hrs)</option>
+            <option value="15:15">03:15 – 04:15 PM (Lecture)</option>
+          </select>
+        </label>
+        <label>Session Type
+          <select id="newSessionType">
+            <option value="Theory Lecture">Theory Lecture</option>
+            <option value="Practical Lab">Practical Lab</option>
+            <option value="Tutorial / Seminar">Tutorial / Seminar</option>
           </select>
         </label>
         <div class="modal-actions">
@@ -1284,6 +1295,7 @@
 
         <div class="modal-actions">
           <button class="outline" id="sessionCloseBtn">Close</button>
+          <button class="mini-btn gray admin-only" id="sessionDeleteBtn" style="display:none; margin-right:auto;">🗑 Delete Session</button>
           <button class="secondary-btn" id="sessionViewKioskBtn" style="display:none;" data-view="kiosk">Launch Face Kiosk ◉</button>
           <button class="primary" id="sessionStartAttendanceBtn">Open Attendance Roster →</button>
         </div>

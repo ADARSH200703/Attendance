@@ -2595,8 +2595,10 @@ $("#savePersonBtn")?.addEventListener("click", async () => {
 let currentTimetableDate = new Date(2026, 7, 20); // Default August 2026 academic calendar
 let timetableActiveTab = "all"; // "all" | "upcoming" | "active" | "past"
 let timetableActiveMode = "grid"; // "grid" | "list"
+let selectedSessionId = null;
 
 const timetableSessions = [
+  // MONDAY SESSIONS
   {
     id: "sess-1",
     title: "Algorithms",
@@ -2605,112 +2607,104 @@ const timetableSessions = [
     room: "Room 201",
     faculty: "Dr. R. Verma",
     day: "MON",
-    date: "2026-08-17",
     startTime: "09:00",
     endTime: "10:00",
     timeDisplay: "09:00 – 10:00 AM",
     type: "Theory Lecture",
     color: "e1",
-    status: "past",
     attendanceRate: 91.2,
     presentCount: 31,
     totalCount: 34,
   },
   {
     id: "sess-2",
-    title: "DBMS",
-    code: "CS304",
-    class: "CSE 2B",
-    room: "Room 108",
-    faculty: "Prof. S. Rao",
-    day: "TUE",
-    date: "2026-08-18",
-    startTime: "11:15",
-    endTime: "12:15",
-    timeDisplay: "11:15 – 12:15 PM",
-    type: "Theory Lecture",
-    color: "e2",
-    status: "past",
-    attendanceRate: 87.8,
-    presentCount: 29,
-    totalCount: 33,
-  },
-  {
-    id: "sess-3",
-    title: "Data Structures",
-    code: "CS301",
-    class: "CSE 3A",
-    room: "Room 204",
-    faculty: "Dr. A. Sharma",
-    day: "THU",
-    date: "2026-08-20",
-    startTime: "10:00",
-    endTime: "11:00",
-    timeDisplay: "10:00 – 11:00 AM",
-    type: "Theory Lecture",
-    color: "e3",
-    status: "active",
-    attendanceRate: 93.3,
-    presentCount: 28,
-    totalCount: 30,
-  },
-  {
-    id: "sess-4",
-    title: "DS Lab",
-    code: "CS301L",
-    class: "CSE 3A",
-    room: "Computing Lab 03",
-    faculty: "Dr. A. Sharma & Lab Staff",
-    day: "THU",
-    date: "2026-08-20",
-    startTime: "14:15",
-    endTime: "16:15",
-    timeDisplay: "02:15 – 04:15 PM",
-    type: "Practical Lab",
-    color: "e4",
-    status: "upcoming",
-    attendanceRate: null,
-    presentCount: 0,
-    totalCount: 30,
-  },
-  {
-    id: "sess-5",
-    title: "Algorithms",
-    code: "CS302",
-    class: "CSE 3B",
-    room: "Room 201",
-    faculty: "Dr. R. Verma",
-    day: "FRI",
-    date: "2026-08-21",
-    startTime: "11:15",
-    endTime: "12:15",
-    timeDisplay: "11:15 – 12:15 PM",
-    type: "Theory Lecture",
-    color: "e5",
-    status: "upcoming",
-    attendanceRate: null,
-    presentCount: 0,
-    totalCount: 34,
-  },
-  {
-    id: "sess-6",
     title: "Operating Systems",
     code: "CS303",
     class: "CSE 3A",
     room: "Room 206",
     faculty: "Prof. K. Iyer",
     day: "MON",
-    date: "2026-08-24",
+    startTime: "11:15",
+    endTime: "12:15",
+    timeDisplay: "11:15 – 12:15 PM",
+    type: "Theory Lecture",
+    color: "e2",
+    attendanceRate: 88.5,
+    presentCount: 28,
+    totalCount: 30,
+  },
+  {
+    id: "sess-3",
+    title: "Computer Networks",
+    code: "CS305",
+    class: "CSE 3A",
+    room: "Room 204",
+    faculty: "Dr. M. Patel",
+    day: "MON",
+    startTime: "14:15",
+    endTime: "15:15",
+    timeDisplay: "02:15 – 03:15 PM",
+    type: "Theory Lecture",
+    color: "e3",
+    attendanceRate: 86.7,
+    presentCount: 26,
+    totalCount: 30,
+  },
+
+  // TUESDAY SESSIONS
+  {
+    id: "sess-4",
+    title: "DBMS",
+    code: "CS304",
+    class: "CSE 2B",
+    room: "Room 108",
+    faculty: "Prof. S. Rao",
+    day: "TUE",
     startTime: "10:00",
     endTime: "11:00",
     timeDisplay: "10:00 – 11:00 AM",
     type: "Theory Lecture",
     color: "e2",
-    status: "upcoming",
-    attendanceRate: null,
-    presentCount: 0,
+    attendanceRate: 87.8,
+    presentCount: 29,
+    totalCount: 33,
+  },
+  {
+    id: "sess-5",
+    title: "Discrete Mathematics",
+    code: "MA302",
+    class: "CSE 3A",
+    room: "Room 202",
+    faculty: "Dr. V. Menon",
+    day: "TUE",
+    startTime: "11:15",
+    endTime: "12:15",
+    timeDisplay: "11:15 – 12:15 PM",
+    type: "Theory Lecture",
+    color: "e5",
+    attendanceRate: 90.0,
+    presentCount: 27,
     totalCount: 30,
   },
+  {
+    id: "sess-6",
+    title: "DBMS Lab",
+    code: "CS304L",
+    class: "CSE 2B",
+    room: "Software Lab 01",
+    faculty: "Prof. S. Rao & Lab Staff",
+    day: "TUE",
+    startTime: "14:15",
+    endTime: "16:15",
+    timeDisplay: "02:15 – 04:15 PM",
+    type: "Practical Lab",
+    color: "e4",
+    attendanceRate: 93.9,
+    presentCount: 31,
+    totalCount: 33,
+  },
+
+  // WEDNESDAY SESSIONS
   {
     id: "sess-7",
     title: "Computer Networks",
@@ -2719,32 +2713,152 @@ const timetableSessions = [
     room: "Room 204",
     faculty: "Dr. M. Patel",
     day: "WED",
-    date: "2026-08-26",
     startTime: "09:00",
     endTime: "10:00",
     timeDisplay: "09:00 – 10:00 AM",
     type: "Theory Lecture",
     color: "e1",
-    status: "upcoming",
-    attendanceRate: null,
-    presentCount: 0,
+    attendanceRate: 93.3,
+    presentCount: 28,
     totalCount: 30,
   },
   {
     id: "sess-8",
-    title: "Web Technologies",
-    code: "CS306",
-    class: "CSE 3B",
-    room: "Software Lab 02",
-    faculty: "Prof. N. Sen",
-    day: "FRI",
-    date: "2026-08-28",
+    title: "Theory of Computation",
+    code: "CS307",
+    class: "CSE 3A",
+    room: "Room 202",
+    faculty: "Prof. D. Mukherjee",
+    day: "WED",
+    startTime: "11:15",
+    endTime: "12:15",
+    timeDisplay: "11:15 – 12:15 PM",
+    type: "Theory Lecture",
+    color: "e5",
+    attendanceRate: 86.6,
+    presentCount: 26,
+    totalCount: 30,
+  },
+  {
+    id: "sess-9",
+    title: "Network Security Lab",
+    code: "CS305L",
+    class: "CSE 3A",
+    room: "Systems Lab 04",
+    faculty: "Dr. M. Patel & Lab Staff",
+    day: "WED",
+    startTime: "14:15",
+    endTime: "16:15",
+    timeDisplay: "02:15 – 04:15 PM",
+    type: "Practical Lab",
+    color: "e3",
+    attendanceRate: 96.7,
+    presentCount: 29,
+    totalCount: 30,
+  },
+
+  // THURSDAY SESSIONS (Today / Live)
+  {
+    id: "sess-10",
+    title: "Mathematics III",
+    code: "MA301",
+    class: "CSE 3A",
+    room: "Room 204",
+    faculty: "Dr. V. Menon",
+    day: "THU",
+    startTime: "09:00",
+    endTime: "10:00",
+    timeDisplay: "09:00 – 10:00 AM",
+    type: "Theory Lecture",
+    color: "e1",
+    attendanceRate: 90.0,
+    presentCount: 27,
+    totalCount: 30,
+  },
+  {
+    id: "sess-11",
+    title: "Data Structures",
+    code: "CS301",
+    class: "CSE 3A",
+    room: "Room 204",
+    faculty: "Dr. A. Sharma",
+    day: "THU",
+    startTime: "10:00",
+    endTime: "11:00",
+    timeDisplay: "10:00 – 11:00 AM",
+    type: "Theory Lecture",
+    color: "e3",
+    isLiveSession: true,
+    attendanceRate: 93.3,
+    presentCount: 28,
+    totalCount: 30,
+  },
+  {
+    id: "sess-12",
+    title: "DS Lab",
+    code: "CS301L",
+    class: "CSE 3A",
+    room: "Computing Lab 03",
+    faculty: "Dr. A. Sharma & Lab Staff",
+    day: "THU",
     startTime: "14:15",
     endTime: "16:15",
     timeDisplay: "02:15 – 04:15 PM",
     type: "Practical Lab",
     color: "e4",
-    status: "upcoming",
+    attendanceRate: null,
+    presentCount: 0,
+    totalCount: 30,
+  },
+
+  // FRIDAY SESSIONS
+  {
+    id: "sess-13",
+    title: "Software Engineering",
+    code: "CS308",
+    class: "CSE 3B",
+    room: "Room 205",
+    faculty: "Prof. N. Sen",
+    day: "FRI",
+    startTime: "10:00",
+    endTime: "11:00",
+    timeDisplay: "10:00 – 11:00 AM",
+    type: "Theory Lecture",
+    color: "e2",
+    attendanceRate: null,
+    presentCount: 0,
+    totalCount: 34,
+  },
+  {
+    id: "sess-14",
+    title: "Algorithms",
+    code: "CS302",
+    class: "CSE 3B",
+    room: "Room 201",
+    faculty: "Dr. R. Verma",
+    day: "FRI",
+    startTime: "11:15",
+    endTime: "12:15",
+    timeDisplay: "11:15 – 12:15 PM",
+    type: "Theory Lecture",
+    color: "e5",
+    attendanceRate: null,
+    presentCount: 0,
+    totalCount: 34,
+  },
+  {
+    id: "sess-15",
+    title: "Web Technologies Lab",
+    code: "CS306L",
+    class: "CSE 3B",
+    room: "Software Lab 02",
+    faculty: "Prof. N. Sen & Lab Staff",
+    day: "FRI",
+    startTime: "14:15",
+    endTime: "16:15",
+    timeDisplay: "02:15 – 04:15 PM",
+    type: "Practical Lab",
+    color: "e4",
     attendanceRate: null,
     presentCount: 0,
     totalCount: 34,
@@ -2777,8 +2891,25 @@ function formatDateISO(d) {
   return `${year}-${month}-${day}`;
 }
 
-function openSessionModal(sess) {
+function updateSubjectFilterOptions() {
+  const select = $("#ttSubjectFilter");
+  if (!select) return;
+  const currentVal = select.value || "all";
+  const uniqueSubjects = Array.from(new Set(timetableSessions.map(s => s.title))).sort();
+  
+  select.innerHTML = `<option value="all">All Subjects &amp; Labs (${timetableSessions.length})</option>` + 
+    uniqueSubjects.map(sub => `<option value="${escapeHtml(sub)}">${escapeHtml(sub)}</option>`).join("");
+  
+  if (currentVal && uniqueSubjects.includes(currentVal)) {
+    select.value = currentVal;
+  } else {
+    select.value = "all";
+  }
+}
+
+function openSessionModal(sess, sessDateObj, computedStatus) {
   if (!sess) return;
+  selectedSessionId = sess.id;
   const modal = $("#sessionDetailModal");
   if (!modal) return;
 
@@ -2795,6 +2926,7 @@ function openSessionModal(sess) {
   const attInfo = $("#sessionDetailAttInfo");
   const fill = $("#sessionDetailProgressFill");
   const kioskBtn = $("#sessionViewKioskBtn");
+  const deleteBtn = $("#sessionDeleteBtn");
   const role = $("#roleSelect")?.value || "teacher";
 
   if (title) title.textContent = sess.title;
@@ -2802,15 +2934,19 @@ function openSessionModal(sess) {
   if (cl) cl.textContent = sess.class;
   if (faculty) faculty.textContent = sess.faculty || "Faculty · CSE";
   if (rm) rm.textContent = sess.room;
-  if (dt) dt.textContent = sess.date ? new Date(sess.date).toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", year: "numeric" }) : `${sess.day} (Semester 5)`;
+  
+  const displayDate = sessDateObj || (sess.date ? new Date(sess.date) : new Date(2026, 7, 20));
+  if (dt) dt.textContent = displayDate.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
   if (tm) tm.textContent = sess.timeDisplay;
   if (type) type.textContent = sess.type || "Theory Lecture";
 
+  const finalStatus = computedStatus || sess.status || "upcoming";
+
   if (badge) {
-    if (sess.status === "past") {
+    if (finalStatus === "past") {
       badge.className = "tag-chip gray";
       badge.textContent = "✓ Completed";
-    } else if (sess.status === "active") {
+    } else if (finalStatus === "active") {
       badge.className = "tag-chip green";
       badge.textContent = "● Live Active";
     } else {
@@ -2820,26 +2956,30 @@ function openSessionModal(sess) {
   }
 
   if (attRate && attInfo && fill) {
-    if (sess.status === "past" && sess.attendanceRate) {
+    if (finalStatus === "past" && sess.attendanceRate) {
       attRate.textContent = `${sess.attendanceRate}% Rate`;
       attInfo.textContent = `${sess.presentCount || 28} of ${sess.totalCount || 30} students recorded present.`;
       fill.style.width = `${sess.attendanceRate}%`;
       fill.style.background = "var(--green)";
-    } else if (sess.status === "active") {
-      attRate.textContent = "Live Feed Active";
-      attInfo.textContent = "Biometric Face Kiosk is verifying attendance in real time.";
+    } else if (finalStatus === "active") {
+      attRate.textContent = "Live Face Kiosk Active";
+      attInfo.textContent = "Biometric Face Kiosk is auto-verifying attendance in real time.";
       fill.style.width = "93.3%";
       fill.style.background = "var(--green)";
     } else {
       attRate.textContent = "Scheduled";
-      attInfo.textContent = "Attendance verification opens at session start time.";
+      attInfo.textContent = "Attendance verification will unlock at session start time.";
       fill.style.width = "0%";
       fill.style.background = "var(--line)";
     }
   }
 
   if (kioskBtn) {
-    kioskBtn.style.display = sess.status === "active" ? "" : "none";
+    kioskBtn.style.display = finalStatus === "active" ? "" : "none";
+  }
+
+  if (deleteBtn) {
+    deleteBtn.style.display = role === "admin" ? "" : "none";
   }
 
   const startBtn = $("#sessionStartAttendanceBtn");
@@ -2866,7 +3006,7 @@ function renderTimetable() {
   const weekDays = getWeekDays(currentTimetableDate);
   const monday = weekDays[0];
   const friday = weekDays[4];
-  const now = new Date();
+  const now = new Date(2026, 7, 20); // Semester benchmark: Thu Aug 20, 2026
   const todayStr = formatDateISO(now);
 
   // Update Week range label and Date input
@@ -2893,8 +3033,38 @@ function renderTimetable() {
 
   const subjectFilter = $("#ttSubjectFilter")?.value || "all";
 
-  // Filter sessions by subject
-  const filtered = timetableSessions.filter((s) => {
+  // Compute session metadata for the viewed week
+  const dayIdxMap = { MON: 0, TUE: 1, WED: 2, THU: 3, FRI: 4 };
+  const enrichedSessions = timetableSessions.map((sess) => {
+    const idx = dayIdxMap[sess.day] !== undefined ? dayIdxMap[sess.day] : 0;
+    const sessDateObj = weekDays[idx];
+    const sessDateStr = formatDateISO(sessDateObj);
+
+    let status = "upcoming";
+    if (sessDateStr < todayStr) {
+      status = "past";
+    } else if (sessDateStr > todayStr) {
+      status = "upcoming";
+    } else {
+      if (sess.isLiveSession) {
+        status = "active";
+      } else if (sess.startTime < "10:00") {
+        status = "past";
+      } else {
+        status = "upcoming";
+      }
+    }
+
+    return {
+      ...sess,
+      computedDateObj: sessDateObj,
+      computedDateStr: sessDateStr,
+      computedStatus: status,
+    };
+  });
+
+  // Filter by subject
+  const filtered = enrichedSessions.filter((s) => {
     if (subjectFilter !== "all" && s.title !== subjectFilter) return false;
     return true;
   });
@@ -2904,29 +3074,38 @@ function renderTimetable() {
   if (eventsContainer) {
     eventsContainer.innerHTML = "";
     
-    // Day column offset mapping
-    const dayLeftMap = { MON: "1%", TUE: "21%", WED: "41%", THU: "61%", FRI: "81%" };
+    // Day column offset mapping: 5 equal columns (20% each)
+    const dayLeftMap = { MON: "1.5%", TUE: "21.5%", WED: "41.5%", THU: "61.5%", FRI: "81.5%" };
     
     // Time slot top offset calculation
     const getTopPercent = (timeStr) => {
       const parts = timeStr.split(":");
       const h = parseInt(parts[0], 10);
       const m = parseInt(parts[1] || 0, 10);
-      // Timeline from 09:00 (0%) to 17:00 (100%)
+      // Scale from 09:00 (0%) to 17:00 (100%)
       const totalMinutes = (h - 9) * 60 + m;
-      return Math.max(2, Math.min(84, (totalMinutes / 480) * 100));
+      return Math.max(1, Math.min(84, (totalMinutes / 480) * 100));
     };
 
     filtered.forEach((sess) => {
       const ev = document.createElement("div");
       ev.className = `event ${sess.color || "e1"}`;
-      ev.style.left = dayLeftMap[sess.day] || "1%";
+      ev.style.left = dayLeftMap[sess.day] || "1.5%";
+      ev.style.width = "17%";
       ev.style.top = `${getTopPercent(sess.startTime)}%`;
+      
+      if (sess.type === "Practical Lab") {
+        ev.style.minHeight = "105px";
+      }
 
       let statusPill = "";
-      if (sess.status === "past") statusPill = `<span class="event-status-pill" style="color:var(--muted);">✓ Past</span>`;
-      else if (sess.status === "active") statusPill = `<span class="event-status-pill" style="color:var(--green);">● Live</span>`;
-      else statusPill = `<span class="event-status-pill" style="color:var(--blue-text);">⏳ Upcoming</span>`;
+      if (sess.computedStatus === "past") {
+        statusPill = `<span class="event-status-pill" style="color:var(--muted);">✓ Past</span>`;
+      } else if (sess.computedStatus === "active") {
+        statusPill = `<span class="event-status-pill" style="color:var(--green);">● Live</span>`;
+      } else {
+        statusPill = `<span class="event-status-pill" style="color:var(--blue-text);">⏳ Upcoming</span>`;
+      }
 
       ev.innerHTML = `
         <b>${escapeHtml(sess.title)}</b>
@@ -2934,16 +3113,16 @@ function renderTimetable() {
         ${statusPill}
       `;
 
-      ev.addEventListener("click", () => openSessionModal(sess));
+      ev.addEventListener("click", () => openSessionModal(sess, sess.computedDateObj, sess.computedStatus));
       eventsContainer.appendChild(ev);
     });
   }
 
   // Update counts for List View tabs
   const allCount = filtered.length;
-  const upcomingCount = filtered.filter(s => s.status === "upcoming").length;
-  const activeCount = filtered.filter(s => s.status === "active").length;
-  const pastCount = filtered.filter(s => s.status === "past").length;
+  const upcomingCount = filtered.filter(s => s.computedStatus === "upcoming").length;
+  const activeCount = filtered.filter(s => s.computedStatus === "active").length;
+  const pastCount = filtered.filter(s => s.computedStatus === "past").length;
 
   if ($("#ttCountAll")) $("#ttCountAll").textContent = allCount;
   if ($("#ttCountUpcoming")) $("#ttCountUpcoming").textContent = upcomingCount;
@@ -2955,9 +3134,9 @@ function renderTimetable() {
   if (feed) {
     feed.innerHTML = "";
     const listFiltered = filtered.filter((s) => {
-      if (timetableActiveTab === "upcoming") return s.status === "upcoming";
-      if (timetableActiveTab === "active") return s.status === "active";
-      if (timetableActiveTab === "past") return s.status === "past";
+      if (timetableActiveTab === "upcoming") return s.computedStatus === "upcoming";
+      if (timetableActiveTab === "active") return s.computedStatus === "active";
+      if (timetableActiveTab === "past") return s.computedStatus === "past";
       return true;
     });
 
@@ -2965,7 +3144,7 @@ function renderTimetable() {
       feed.innerHTML = `
         <div style="padding:40px 20px; text-align:center; color:var(--muted); font-size:13px;">
           <div style="font-size:26px; margin-bottom:8px;">📅</div>
-          <strong>No sessions found for this category</strong>
+          <strong>No sessions found for this category in the selected week</strong>
           <p style="margin:4px 0 0; font-size:12px;">Try switching tabs or resetting the subject filter.</p>
         </div>
       `;
@@ -2975,15 +3154,15 @@ function renderTimetable() {
         card.className = `tt-session-card ${sess.color || "e1"}`;
         
         let statusBadge = "";
-        if (sess.status === "past") {
+        if (sess.computedStatus === "past") {
           statusBadge = `<span class="tag-chip gray">✓ Completed · ${sess.attendanceRate || 90}% Att.</span>`;
-        } else if (sess.status === "active") {
+        } else if (sess.computedStatus === "active") {
           statusBadge = `<span class="tag-chip green">● Active Now · Kiosk Live</span>`;
         } else {
           statusBadge = `<span class="tag-chip blue">⏳ Upcoming</span>`;
         }
 
-        const dateFormatted = sess.date ? new Date(sess.date).toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" }) : sess.day;
+        const dateFormatted = sess.computedDateObj.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" });
 
         card.innerHTML = `
           <div class="tt-card-main">
@@ -3002,7 +3181,7 @@ function renderTimetable() {
           </div>
         `;
 
-        card.addEventListener("click", () => openSessionModal(sess));
+        card.addEventListener("click", () => openSessionModal(sess, sess.computedDateObj, sess.computedStatus));
         feed.appendChild(card);
       });
     }
@@ -3074,6 +3253,7 @@ $("#saveSessionBtn")?.addEventListener("click", () => {
   const room = $("#newSessionRoom")?.value.trim() || "Room 204";
   const day = $("#newSessionDay")?.value || "MON";
   const time = $("#newSessionTime")?.value || "09:00";
+  const type = $("#newSessionType")?.value || "Theory Lecture";
 
   if (!sub) {
     toast("Please enter a subject name");
@@ -3081,11 +3261,19 @@ $("#saveSessionBtn")?.addEventListener("click", () => {
   }
 
   const timeMap = {
-    "09:00": { display: "09:00 – 10:00 AM", end: "10:00" },
-    "10:00": { display: "10:00 – 11:00 AM", end: "11:00" },
-    "11:15": { display: "11:15 – 12:15 PM", end: "12:15" },
-    "14:15": { display: "02:15 – 03:15 PM", end: "15:15" },
+    "09:00": { display: "09:00 – 10:00 AM", start: "09:00", end: "10:00" },
+    "10:00": { display: "10:00 – 11:00 AM", start: "10:00", end: "11:00" },
+    "11:15": { display: "11:15 – 12:15 PM", start: "11:15", end: "12:15" },
+    "12:15": { display: "12:15 – 01:15 PM", start: "12:15", end: "13:15" },
+    "13:15": { display: "01:15 – 02:15 PM", start: "13:15", end: "14:15" },
+    "14:15": { display: "02:15 – 03:15 PM", start: "14:15", end: "15:15" },
+    "14:15-lab": { display: "02:15 – 04:15 PM", start: "14:15", end: "16:15" },
+    "15:15": { display: "03:15 – 04:15 PM", start: "15:15", end: "16:15" },
   };
+
+  const slotInfo = timeMap[time] || { display: `${time} Session`, start: time.substring(0, 5), end: "11:00" };
+  const colorChoices = ["e1", "e2", "e3", "e4", "e5"];
+  const color = colorChoices[timetableSessions.length % colorChoices.length];
 
   const newSess = {
     id: "sess-" + Date.now(),
@@ -3095,24 +3283,38 @@ $("#saveSessionBtn")?.addEventListener("click", () => {
     room: room,
     faculty: "Faculty · CSE",
     day: day,
-    date: formatDateISO(currentTimetableDate),
-    startTime: time,
-    endTime: timeMap[time]?.end || "10:00",
-    timeDisplay: timeMap[time]?.display || `${time} Session`,
-    type: "Theory Lecture",
-    color: "e" + (Math.floor(Math.random() * 5) + 1),
-    status: "upcoming",
+    startTime: slotInfo.start,
+    endTime: slotInfo.end,
+    timeDisplay: slotInfo.display,
+    type: type,
+    color: color,
     attendanceRate: null,
     presentCount: 0,
     totalCount: 30,
   };
 
-  timetableSessions.push(newSess);
+  timetableSessions.unshift(newSess);
   $("#addSessionModal")?.classList.remove("open");
   if ($("#newSessionSubject")) $("#newSessionSubject").value = "";
-  toast(`Added ${sub} to academic timetable`);
-  playSound("success");
+  
+  updateSubjectFilterOptions();
   renderTimetable();
+  toast(`Added "${sub}" to ${day} timetable`);
+  playSound("success");
+});
+
+// Delete Session Handler (Admin Only)
+$("#sessionDeleteBtn")?.addEventListener("click", () => {
+  if (!selectedSessionId) return;
+  const idx = timetableSessions.findIndex(s => s.id === selectedSessionId);
+  if (idx !== -1) {
+    const title = timetableSessions[idx].title;
+    timetableSessions.splice(idx, 1);
+    $("#sessionDetailModal")?.classList.remove("open");
+    updateSubjectFilterOptions();
+    renderTimetable();
+    toast(`Deleted session "${title}"`);
+  }
 });
 
 // Modal close handlers
@@ -3122,6 +3324,9 @@ $("#sessionViewKioskBtn")?.addEventListener("click", () => {
   $("#sessionDetailModal")?.classList.remove("open");
   showView("kiosk");
 });
+
+// Initialize subject filter options
+updateSubjectFilterOptions();
 
 // Attention & Notifications
 $$(".notify-btn").forEach((btn) => {
