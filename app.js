@@ -45,18 +45,33 @@ const defaultLeaves = [
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => document.querySelectorAll(s);
 
+function escapeHtml(str) {
+  if (str === null || str === undefined) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 const storage = {
-  get: (k, def = []) => {
+  get: (k, def = null) => {
     try {
       const val = localStorage.getItem(k);
-      return val ? JSON.parse(val) : def;
+      if (val === null || val === undefined) return def;
+      try {
+        return JSON.parse(val);
+      } catch {
+        return val;
+      }
     } catch {
       return def;
     }
   },
   set: (k, val) => {
     try {
-      localStorage.setItem(k, JSON.stringify(val));
+      localStorage.setItem(k, typeof val === "string" ? val : JSON.stringify(val));
     } catch (e) {
       console.warn("localStorage write failed:", e);
     }
