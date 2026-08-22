@@ -1132,19 +1132,25 @@
           </div>
         </div>
 
-        <!-- Search & Filter Controls -->
-        <div class="classes-search-bar" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; gap:12px; flex-wrap:wrap;">
-          <div class="search-wrap" style="flex:1; max-width:360px;">
-            <span class="search-icon">🔍</span>
-            <input type="text" id="classSearchInput" placeholder="Search by class name, teacher, or subject..." />
+        <!-- Search & Filter Toolbar -->
+        <div class="classes-toolbar">
+          <div class="classes-search-box">
+            <svg class="classes-search-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input type="text" id="classSearchInput" placeholder="Search by class name, mentor teacher, or assigned subject..." />
+            <button id="clearClassSearchBtn" class="search-clear-btn" style="display:none;" title="Clear search">✕</button>
           </div>
-          <select id="classDeptFilter" style="padding:8px 12px; border:1px solid var(--line); border-radius:var(--radius-sm); background:var(--input-bg); color:var(--ink); font-size:12.5px; outline:none;">
-            <option value="all">All Academic Departments</option>
-            <option value="Computer Science & Engineering">Computer Science & Engineering</option>
-            <option value="Electronics & Communication">Electronics & Communication</option>
-            <option value="Information Technology">Information Technology</option>
-            <option value="Artificial Intelligence & ML">Artificial Intelligence & ML</option>
-          </select>
+          <div class="classes-filter-group">
+            <span class="classes-match-count" id="classMatchCount">Showing 8 batches</span>
+            <select id="classDeptFilter" class="classes-dept-select">
+              <option value="all">All Academic Departments</option>
+              <option value="Computer Science & Engineering">Computer Science & Engineering</option>
+              <option value="Electronics & Communication">Electronics & Communication</option>
+              <option value="Information Technology">Information Technology</option>
+              <option value="Artificial Intelligence & ML">Artificial Intelligence & ML</option>
+            </select>
+          </div>
         </div>
 
         <div class="panel class-table" id="classesTable">

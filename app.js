@@ -2737,6 +2737,17 @@ function renderClassesDirectory() {
     return true;
   });
 
+  // Update Match Counter badge & Clear button
+  const matchCountEl = $("#classMatchCount");
+  if (matchCountEl) {
+    matchCountEl.textContent = `Showing ${filtered.length} of ${classesList.length} cohorts`;
+  }
+
+  const clearBtn = $("#clearClassSearchBtn");
+  if (clearBtn) {
+    clearBtn.style.display = q.length > 0 ? "flex" : "none";
+  }
+
   // Update Summary Stats Counters
   const totalClassesEl = $("#statTotalClassesCount");
   const totalFacultyEl = $("#statAssignedFacultyCount");
@@ -2847,6 +2858,12 @@ function openManageClassModal(classId) {
 // Search & Filter event listeners for Classes
 $("#classSearchInput")?.addEventListener("input", renderClassesDirectory);
 $("#classDeptFilter")?.addEventListener("change", renderClassesDirectory);
+$("#clearClassSearchBtn")?.addEventListener("click", () => {
+  const input = $("#classSearchInput");
+  if (input) input.value = "";
+  renderClassesDirectory();
+  input?.focus();
+});
 
 // Create Class Modal Event Listeners
 $("#createClassBtn")?.addEventListener("click", () => $("#createClassModal")?.classList.add("open"));
