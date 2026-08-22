@@ -899,27 +899,27 @@
             <h3>New Leave Application</h3>
             <form id="studentLeaveForm" onsubmit="return false;">
               <div class="form-row">
-                <label>Leave Category
-                  <select id="studentLeaveType" required>
-                    <option value="Medical Leave">Medical Leave (Health / Doctor consultation)</option>
-                    <option value="Academic / Hackathon">Academic Event / Hackathon / Conference</option>
-                    <option value="Sports & Athletics">Sports Tournament / Athletics meet</option>
-                    <option value="Family / Personal">Family Emergency / Personal</option>
-                  </select>
-                </label>
+                <label for="studentLeaveType">Leave Category</label>
+                <select id="studentLeaveType" required>
+                  <option value="Medical Leave">Medical Leave (Health / Doctor consultation)</option>
+                  <option value="Academic / Hackathon">Academic Event / Hackathon / Conference</option>
+                  <option value="Sports & Athletics">Sports Tournament / Athletics meet</option>
+                  <option value="Family / Personal">Family Emergency / Personal</option>
+                </select>
               </div>
               <div class="form-row two-col">
-                <label>From Date
+                <div class="form-field">
+                  <label for="studentLeaveFrom">From Date</label>
                   <input type="date" id="studentLeaveFrom" required />
-                </label>
-                <label>To Date
+                </div>
+                <div class="form-field">
+                  <label for="studentLeaveTo">To Date</label>
                   <input type="date" id="studentLeaveTo" required />
-                </label>
+                </div>
               </div>
               <div class="form-row">
-                <label>Reason & Justification
-                  <textarea id="studentLeaveReason" rows="3" placeholder="Describe the reason for your leave request..." required></textarea>
-                </label>
+                <label for="studentLeaveReason">Reason &amp; Justification</label>
+                <textarea id="studentLeaveReason" rows="4" placeholder="Describe the reason and detailed justification for your leave request..." required></textarea>
               </div>
               <div class="form-actions">
                 <button type="button" class="primary" id="submitStudentLeaveBtn">Submit Leave Request →</button>

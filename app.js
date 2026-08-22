@@ -2811,6 +2811,17 @@ $("#roleSelect")?.addEventListener("change", (e) => {
   toast(`Switched to ${role === "student" ? "Student Portal" : role === "admin" ? "Admin Mode" : "Teacher View"}`);
 });
 
+// Dynamic Auto-expanding Reason & Justification Textarea
+const studentLeaveReasonEl = $("#studentLeaveReason");
+if (studentLeaveReasonEl) {
+  const autoExpandReason = () => {
+    studentLeaveReasonEl.style.height = "auto";
+    studentLeaveReasonEl.style.height = `${Math.max(130, studentLeaveReasonEl.scrollHeight)}px`;
+  };
+  studentLeaveReasonEl.addEventListener("input", autoExpandReason);
+  studentLeaveReasonEl.addEventListener("change", autoExpandReason);
+}
+
 // Student Leave Submission Handler
 $("#submitStudentLeaveBtn")?.addEventListener("click", async () => {
   const type = $("#studentLeaveType")?.value || "Medical Leave";
@@ -2872,7 +2883,10 @@ $("#submitStudentLeaveBtn")?.addEventListener("click", async () => {
 
   // Reset form
   const reasonEl = $("#studentLeaveReason");
-  if (reasonEl) reasonEl.value = "";
+  if (reasonEl) {
+    reasonEl.value = "";
+    reasonEl.style.height = "";
+  }
   toast("Leave application submitted successfully! Pending faculty review.");
 
   // Save to MongoDB Cloud

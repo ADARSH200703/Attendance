@@ -3463,15 +3463,114 @@ body, .sidebar, main, .panel, article, .modal-card, input, select, textarea, .re
 /* Student Leave Application Layout */
 .student-leave-layout {
   display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  gap: 20px;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.student-leave-form-card,
+.student-leave-history-card {
+  padding: 24px;
 }
 
 .student-leave-form-card h3,
 .student-leave-history-card h3 {
-  font-size: 15px;
-  margin: 0 0 16px;
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 20px;
   color: var(--ink);
+}
+
+.student-leave-form-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.student-leave-form-card .form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.student-leave-form-card .form-row.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.student-leave-form-card .form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.student-leave-form-card label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-secondary);
+  display: block;
+}
+
+.student-leave-form-card input,
+.student-leave-form-card select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--input-bg);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 13.5px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  outline: none;
+}
+
+.student-leave-form-card input:focus,
+.student-leave-form-card select:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+}
+
+.student-leave-form-card textarea#studentLeaveReason {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 130px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--input-bg);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+  resize: vertical;
+  overflow-y: hidden;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  outline: none;
+}
+
+.student-leave-form-card textarea#studentLeaveReason:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+}
+
+.student-leave-form-card textarea#studentLeaveReason::placeholder {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.student-leave-form-card .form-actions {
+  margin-top: 4px;
+}
+
+.student-leave-form-card .form-actions button {
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
 }
 
 .student-leave-history-list {
