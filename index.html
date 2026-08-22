@@ -1097,20 +1097,66 @@
       </section>
 
       <!-- CLASSES -->
+      <!-- CLASSES & SUBJECTS (ADMIN VIEW) -->
       <section id="classes" class="view">
         <div class="section-top">
           <div>
             <p class="eyebrow">ADMINISTRATION</p>
             <h2>Classes & subjects</h2>
-            <p>Organize academic groups and teaching assignments</p>
+            <p>Organize academic batches, class teachers, and course teaching assignments</p>
           </div>
-          <button class="primary small" id="createClassBtn">+ Create class</button>
+          <button class="primary small" id="createClassBtn">+ Create class cohort</button>
         </div>
+
+        <!-- Academic Batches Summary Stats -->
+        <div class="stats-grid" style="margin-bottom:16px;">
+          <div class="stat-card">
+            <span class="stat-label">Active Class Cohorts</span>
+            <strong id="statTotalClassesCount">08</strong>
+            <span class="trend up">Across 4 Engineering Depts</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Assigned Class Teachers</span>
+            <strong id="statAssignedFacultyCount">08</strong>
+            <span class="trend up">Lead Faculty Mentors</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Total Student Strength</span>
+            <strong id="statTotalStudentsCount">272</strong>
+            <span class="trend up">Enrolled Students</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Overall Batch Attendance</span>
+            <strong id="statAvgBatchAtt">88.9%</strong>
+            <span class="trend up">Above 75% Threshold</span>
+          </div>
+        </div>
+
+        <!-- Search & Filter Controls -->
+        <div class="classes-search-bar" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; gap:12px; flex-wrap:wrap;">
+          <div class="search-wrap" style="flex:1; max-width:360px;">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="classSearchInput" placeholder="Search by class name, teacher, or subject..." />
+          </div>
+          <select id="classDeptFilter" style="padding:8px 12px; border:1px solid var(--line); border-radius:var(--radius-sm); background:var(--input-bg); color:var(--ink); font-size:12.5px; outline:none;">
+            <option value="all">All Academic Departments</option>
+            <option value="Computer Science & Engineering">Computer Science & Engineering</option>
+            <option value="Electronics & Communication">Electronics & Communication</option>
+            <option value="Information Technology">Information Technology</option>
+            <option value="Artificial Intelligence & ML">Artificial Intelligence & ML</option>
+          </select>
+        </div>
+
         <div class="panel class-table" id="classesTable">
-          <div><strong>Class</strong><strong>Students</strong><strong>Class teacher</strong><strong>Avg. attendance</strong><strong>Action</strong></div>
-          <div class="class-grid-row"><div>CSE 3A</div><div>32</div><div>Teacher</div><div class="percent">88%</div><button class="link manage-class-btn" data-class="CSE 3A">Manage →</button></div>
-          <div class="class-grid-row"><div>CSE 3B</div><div>30</div><div>Victor Lin</div><div class="percent">79%</div><button class="link manage-class-btn" data-class="CSE 3B">Manage →</button></div>
-          <div class="class-grid-row"><div>ECE 2A</div><div>36</div><div>Maya Rao</div><div class="percent">85%</div><button class="link manage-class-btn" data-class="ECE 2A">Manage →</button></div>
+          <div class="class-table-header">
+            <div>Class Cohort</div>
+            <div>Class Teacher / Mentor</div>
+            <div>Assigned Subjects</div>
+            <div>Students</div>
+            <div>Avg. Attendance</div>
+            <div style="text-align:right;">Action</div>
+          </div>
+          <div id="classesRowsContainer"></div>
         </div>
       </section>
     </main>
@@ -1298,6 +1344,80 @@
           <button class="mini-btn gray admin-only" id="sessionDeleteBtn" style="display:none; margin-right:auto;">🗑 Delete Session</button>
           <button class="secondary-btn" id="sessionViewKioskBtn" style="display:none;" data-view="kiosk">Launch Face Kiosk ◉</button>
           <button class="primary" id="sessionStartAttendanceBtn">Open Attendance Roster →</button>
+        </div>
+      </div>
+    </div>
+  <!-- Create Class Modal (Admin Only) -->
+  <div class="modal-backdrop" id="createClassModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3>+ Create Academic Class Cohort</h3>
+        <button class="modal-close" id="closeCreateClassModal">✕</button>
+      </div>
+      <div class="modal-form">
+        <label>Class / Section Name <input id="newClassName" placeholder="e.g. CSE 4A or AIML 3A" /></label>
+        <label>Academic Department
+          <select id="newClassDept">
+            <option value="Computer Science & Engineering">Computer Science & Engineering</option>
+            <option value="Electronics & Communication">Electronics & Communication</option>
+            <option value="Information Technology">Information Technology</option>
+            <option value="Artificial Intelligence & ML">Artificial Intelligence & ML</option>
+          </select>
+        </label>
+        <label>Semester / Academic Year <input id="newClassSemester" placeholder="e.g. Semester 5 (Year 3)" value="Semester 5 (Year 3)" /></label>
+        <label>Class Teacher / Lead Mentor <input id="newClassTeacher" placeholder="e.g. Dr. Ananya Iyer" /></label>
+        <label>Teacher Designation / Role <input id="newClassTeacherRole" placeholder="e.g. Assistant Professor · CSE" value="Assistant Professor · CSE" /></label>
+        <label>Assigned Classroom / Lab Venue <input id="newClassRoom" placeholder="e.g. Room 205" value="Room 205" /></label>
+        <label>Enrolled Student Count <input id="newClassStudentsCount" type="number" value="32" /></label>
+        <label>Assigned Subjects (comma separated) <input id="newClassSubjects" placeholder="e.g. Cloud Computing (IT301), Distributed Systems (IT302)" /></label>
+        <div class="modal-actions">
+          <button class="outline" id="cancelCreateClassBtn">Cancel</button>
+          <button class="primary" id="saveCreateClassBtn">Create Class</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manage Class Details Modal -->
+  <div class="modal-backdrop" id="manageClassModal">
+    <div class="modal-card tt-detail-modal-card">
+      <div class="modal-head">
+        <div>
+          <h3 id="manageClassModalTitle">Class Details</h3>
+          <p class="modal-sub" id="manageClassModalDept" style="margin:2px 0 0;font-size:12px;color:var(--muted);">Department &amp; Semester</p>
+        </div>
+        <button class="modal-close" id="closeManageClassModal">✕</button>
+      </div>
+      <div class="modal-form">
+        <div class="tt-modal-grid">
+          <div class="tt-modal-row">
+            <span class="tt-label">Class Teacher / Mentor</span>
+            <strong id="manageClassModalTeacher">Dr. Adarsh Sharma</strong>
+            <small id="manageClassModalTeacherRole" style="color:var(--muted); font-size:11px;">Lead Faculty</small>
+          </div>
+          <div class="tt-modal-row">
+            <span class="tt-label">Classroom / Lab Venue</span>
+            <strong id="manageClassModalRoom">Room 204</strong>
+          </div>
+          <div class="tt-modal-row">
+            <span class="tt-label">Enrolled Strength</span>
+            <strong id="manageClassModalStrength">34 Students</strong>
+          </div>
+          <div class="tt-modal-row">
+            <span class="tt-label">Attendance Performance</span>
+            <strong id="manageClassModalAttRate" style="color:var(--green)">91.4% Rate</strong>
+          </div>
+        </div>
+
+        <div style="margin-bottom:16px;">
+          <span class="tt-label" style="display:block; margin-bottom:6px; font-size:11px; text-transform:uppercase; color:var(--muted); font-weight:600;">Assigned Subjects &amp; Curriculum:</span>
+          <div id="manageClassSubjectsList" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="outline" id="closeManageClassBtn">Close</button>
+          <button class="mini-btn gray" id="deleteClassBtn" style="margin-right:auto;">🗑 Delete Class</button>
+          <button class="primary" id="openClassAttendanceBtn">Open Attendance Roster →</button>
         </div>
       </div>
     </div>

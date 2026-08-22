@@ -400,6 +400,7 @@ function showView(viewId) {
   if (viewId === "reports") renderReportSummary("class");
   if (viewId === "people") renderPeopleDirectory();
   if (viewId === "profiles") renderProfiles();
+  if (viewId === "classes") renderClassesDirectory();
   if (viewId === "kiosk") updateKioskLogTicker();
 
   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -2601,6 +2602,331 @@ $("#savePersonBtn")?.addEventListener("click", async () => {
     attendanceRate: 100,
     consentGiven: true,
   });
+});
+
+// ==========================================
+// CLASSES & TEACHING ASSIGNMENTS (ADMIN VIEW)
+// ==========================================
+
+const defaultClasses = [
+  {
+    id: "cls-1",
+    name: "CSE 3A",
+    dept: "Computer Science & Engineering",
+    semester: "Semester 5 (Year 3)",
+    teacher: "Dr. Adarsh Sharma",
+    teacherRole: "Lead Faculty & Mentor",
+    teacherInitials: "AS",
+    room: "Room 204",
+    studentsCount: 34,
+    subjects: ["Data Structures (CS301)", "Operating Systems (CS303)", "DS Lab (CS301L)"],
+    avgAttendance: 91.4,
+  },
+  {
+    id: "cls-2",
+    name: "CSE 3B",
+    dept: "Computer Science & Engineering",
+    semester: "Semester 5 (Year 3)",
+    teacher: "Dr. Rajesh Verma",
+    teacherRole: "Senior Assistant Professor",
+    teacherInitials: "RV",
+    room: "Room 201",
+    studentsCount: 32,
+    subjects: ["Algorithms (CS302)", "Software Engineering (CS308)", "Web Tech Lab (CS306L)"],
+    avgAttendance: 84.6,
+  },
+  {
+    id: "cls-3",
+    name: "CSE 2A",
+    dept: "Computer Science & Engineering",
+    semester: "Semester 3 (Year 2)",
+    teacher: "Prof. Sarah Adams",
+    teacherRole: "Assistant Professor",
+    teacherInitials: "SA",
+    room: "Room 104",
+    studentsCount: 38,
+    subjects: ["OOP & Java (CS201)", "Digital Logic Design (CS203)", "Java Lab (CS201L)"],
+    avgAttendance: 89.2,
+  },
+  {
+    id: "cls-4",
+    name: "CSE 2B",
+    dept: "Computer Science & Engineering",
+    semester: "Semester 3 (Year 2)",
+    teacher: "Prof. Suresh Rao",
+    teacherRole: "Associate Professor",
+    teacherInitials: "SR",
+    room: "Room 108",
+    studentsCount: 33,
+    subjects: ["Database Systems (CS304)", "Discrete Structures (MA201)", "DBMS Lab (CS304L)"],
+    avgAttendance: 87.8,
+  },
+  {
+    id: "cls-5",
+    name: "ECE 2A",
+    dept: "Electronics & Communication",
+    semester: "Semester 3 (Year 2)",
+    teacher: "Dr. Maya Rao",
+    teacherRole: "Associate Professor · ECE",
+    teacherInitials: "MR",
+    room: "Room 302",
+    studentsCount: 36,
+    subjects: ["Signals & Systems (EC201)", "Analog Electronics (EC203)", "Analog Lab (EC203L)"],
+    avgAttendance: 85.0,
+  },
+  {
+    id: "cls-6",
+    name: "ECE 3A",
+    dept: "Electronics & Communication",
+    semester: "Semester 5 (Year 3)",
+    teacher: "Dr. Vikram Menon",
+    teacherRole: "Professor & Head · ECE",
+    teacherInitials: "VM",
+    room: "Room 305",
+    studentsCount: 35,
+    subjects: ["Microprocessors (EC301)", "DSP (EC303)", "DSP Lab (EC303L)"],
+    avgAttendance: 92.0,
+  },
+  {
+    id: "cls-7",
+    name: "IT 3A",
+    dept: "Information Technology",
+    semester: "Semester 5 (Year 3)",
+    teacher: "Prof. Debashis Mukherjee",
+    teacherRole: "Assistant Professor · IT",
+    teacherInitials: "DM",
+    room: "Room 202",
+    studentsCount: 30,
+    subjects: ["Theory of Computation (CS307)", "Cloud Computing (IT301)", "Cloud Lab (IT301L)"],
+    avgAttendance: 86.5,
+  },
+  {
+    id: "cls-8",
+    name: "AIML 2A",
+    dept: "Artificial Intelligence & ML",
+    semester: "Semester 3 (Year 2)",
+    teacher: "Dr. Neha Sen",
+    teacherRole: "AI Specialist & Assistant Professor",
+    teacherInitials: "NS",
+    room: "Computing Lab 02",
+    studentsCount: 34,
+    subjects: ["Machine Learning (AI201)", "Python for Data Science (AI203)", "AI Lab (AI201L)"],
+    avgAttendance: 94.2,
+  }
+];
+
+let classesList = storage.get("attendlyClasses", defaultClasses);
+let selectedClassId = null;
+
+function renderClassesDirectory() {
+  const container = $("#classesRowsContainer");
+  if (!container) return;
+
+  const q = ($("#classSearchInput")?.value || "").toLowerCase().trim();
+  const deptFilter = $("#classDeptFilter")?.value || "all";
+
+  const filtered = classesList.filter((c) => {
+    if (deptFilter !== "all" && c.dept !== deptFilter) return false;
+    if (q) {
+      const matchName = c.name.toLowerCase().includes(q);
+      const matchTeacher = c.teacher.toLowerCase().includes(q);
+      const matchDept = c.dept.toLowerCase().includes(q);
+      const matchSubjects = (c.subjects || []).some((s) => s.toLowerCase().includes(q));
+      if (!matchName && !matchTeacher && !matchDept && !matchSubjects) return false;
+    }
+    return true;
+  });
+
+  // Update Summary Stats Counters
+  const totalClassesEl = $("#statTotalClassesCount");
+  const totalFacultyEl = $("#statAssignedFacultyCount");
+  const totalStudentsEl = $("#statTotalStudentsCount");
+  const avgAttEl = $("#statAvgBatchAtt");
+
+  if (totalClassesEl) totalClassesEl.textContent = String(classesList.length).padStart(2, "0");
+  if (totalFacultyEl) totalFacultyEl.textContent = String(classesList.length).padStart(2, "0");
+  
+  const totalStudentsSum = classesList.reduce((sum, c) => sum + (c.studentsCount || 0), 0);
+  if (totalStudentsEl) totalStudentsEl.textContent = totalStudentsSum;
+
+  const totalAvgAtt = classesList.length > 0
+    ? (classesList.reduce((sum, c) => sum + (c.avgAttendance || 0), 0) / classesList.length).toFixed(1)
+    : 0;
+  if (avgAttEl) avgAttEl.textContent = `${totalAvgAtt}%`;
+
+  container.innerHTML = "";
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div style="padding:40px 20px; text-align:center; color:var(--muted); font-size:13px;">
+        <div style="font-size:28px; margin-bottom:8px;">🏫</div>
+        <strong>No academic classes match your search or filter</strong>
+        <p style="margin:4px 0 0; font-size:12px;">Try resetting the department dropdown or search query.</p>
+      </div>
+    `;
+    return;
+  }
+
+  filtered.forEach((cls) => {
+    const row = document.createElement("div");
+    row.className = "class-grid-row";
+
+    const subjectsHtml = (cls.subjects || [])
+      .slice(0, 3)
+      .map((s) => `<span class="class-subject-tag">${escapeHtml(s)}</span>`)
+      .join("");
+
+    row.innerHTML = `
+      <div class="class-cell-title">
+        <strong>${escapeHtml(cls.name)}</strong>
+        <small>${escapeHtml(cls.semester || cls.dept)}</small>
+      </div>
+      <div class="class-teacher-cell">
+        <div class="class-teacher-avatar">${escapeHtml(cls.teacherInitials || "TC")}</div>
+        <div class="class-teacher-info">
+          <strong>${escapeHtml(cls.teacher)}</strong>
+          <small>${escapeHtml(cls.teacherRole || "Class Teacher")}</small>
+        </div>
+      </div>
+      <div class="class-subjects-tags">
+        ${subjectsHtml}
+      </div>
+      <div>
+        <strong style="font-size:13px; color:var(--ink);">${cls.studentsCount || 30}</strong>
+        <small style="display:block; color:var(--muted); font-size:11px;">${escapeHtml(cls.room || "Room 204")}</small>
+      </div>
+      <div class="class-att-bar-wrap">
+        <strong style="font-size:12.5px; min-width:40px; color:${cls.avgAttendance >= 75 ? "var(--green)" : "var(--coral-text)"};">${cls.avgAttendance || 85}%</strong>
+        <div class="class-att-bar-track">
+          <div class="class-att-bar-fill" style="width:${cls.avgAttendance || 85}%; background:${cls.avgAttendance >= 75 ? "var(--green)" : "var(--coral-text)"};"></div>
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <button class="link manage-class-btn" data-id="${escapeHtml(cls.id)}" style="font-weight:700; font-size:12.5px;">Manage →</button>
+      </div>
+    `;
+
+    container.appendChild(row);
+  });
+
+  // Attach Manage Button Listeners
+  container.querySelectorAll(".manage-class-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.dataset.id;
+      openManageClassModal(id);
+    });
+  });
+}
+
+function openManageClassModal(classId) {
+  const cls = classesList.find((c) => c.id === classId);
+  if (!cls) return;
+  selectedClassId = classId;
+
+  const modal = $("#manageClassModal");
+  if (!modal) return;
+
+  if ($("#manageClassModalTitle")) $("#manageClassModalTitle").textContent = `Class Cohort: ${cls.name}`;
+  if ($("#manageClassModalDept")) $("#manageClassModalDept").textContent = `${cls.dept} · ${cls.semester}`;
+  if ($("#manageClassModalTeacher")) $("#manageClassModalTeacher").textContent = cls.teacher;
+  if ($("#manageClassModalTeacherRole")) $("#manageClassModalTeacherRole").textContent = cls.teacherRole || "Class Teacher & Mentor";
+  if ($("#manageClassModalRoom")) $("#manageClassModalRoom").textContent = cls.room || "Room 204";
+  if ($("#manageClassModalStrength")) $("#manageClassModalStrength").textContent = `${cls.studentsCount || 30} Enrolled Students`;
+  if ($("#manageClassModalAttRate")) $("#manageClassModalAttRate").textContent = `${cls.avgAttendance || 85}% Semester Average`;
+
+  const subjectsList = $("#manageClassSubjectsList");
+  if (subjectsList) {
+    subjectsList.innerHTML = (cls.subjects || [])
+      .map((s) => `<span class="class-subject-tag" style="padding:4px 10px; font-size:12px;">📚 ${escapeHtml(s)}</span>`)
+      .join("");
+  }
+
+  modal.classList.add("open");
+}
+
+// Search & Filter event listeners for Classes
+$("#classSearchInput")?.addEventListener("input", renderClassesDirectory);
+$("#classDeptFilter")?.addEventListener("change", renderClassesDirectory);
+
+// Create Class Modal Event Listeners
+$("#createClassBtn")?.addEventListener("click", () => $("#createClassModal")?.classList.add("open"));
+$("#closeCreateClassModal")?.addEventListener("click", () => $("#createClassModal")?.classList.remove("open"));
+$("#cancelCreateClassBtn")?.addEventListener("click", () => $("#createClassModal")?.classList.remove("open"));
+
+$("#saveCreateClassBtn")?.addEventListener("click", () => {
+  const name = $("#newClassName")?.value.trim();
+  const dept = $("#newClassDept")?.value || "Computer Science & Engineering";
+  const semester = $("#newClassSemester")?.value.trim() || "Semester 5 (Year 3)";
+  const teacher = $("#newClassTeacher")?.value.trim();
+  const teacherRole = $("#newClassTeacherRole")?.value.trim() || "Class Teacher & Mentor";
+  const room = $("#newClassRoom")?.value.trim() || "Room 204";
+  const count = parseInt($("#newClassStudentsCount")?.value || "30", 10);
+  const subjectsRaw = $("#newClassSubjects")?.value.trim();
+
+  if (!name || !teacher) {
+    toast("Please provide both Class Name and Class Teacher Name");
+    return;
+  }
+
+  const initials = teacher
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+  const subjects = subjectsRaw
+    ? subjectsRaw.split(",").map((s) => s.trim()).filter(Boolean)
+    : [`${name} Core Theory`, `${name} Practical Lab`];
+
+  const newClass = {
+    id: "cls-" + Date.now(),
+    name,
+    dept,
+    semester,
+    teacher,
+    teacherRole,
+    teacherInitials: initials || "TC",
+    room,
+    studentsCount: count,
+    subjects,
+    avgAttendance: 90.0,
+  };
+
+  classesList.unshift(newClass);
+  storage.set("attendlyClasses", classesList);
+
+  // Clear modal inputs & close
+  if ($("#newClassName")) $("#newClassName").value = "";
+  if ($("#newClassTeacher")) $("#newClassTeacher").value = "";
+  if ($("#newClassSubjects")) $("#newClassSubjects").value = "";
+  $("#createClassModal")?.classList.remove("open");
+
+  renderClassesDirectory();
+  toast(`Class cohort ${name} created with teacher ${teacher}`);
+  playSound("success");
+});
+
+// Manage Class Modal Handlers
+$("#closeManageClassModal")?.addEventListener("click", () => $("#manageClassModal")?.classList.remove("open"));
+$("#closeManageClassBtn")?.addEventListener("click", () => $("#manageClassModal")?.classList.remove("open"));
+
+$("#deleteClassBtn")?.addEventListener("click", () => {
+  if (!selectedClassId) return;
+  const idx = classesList.findIndex((c) => c.id === selectedClassId);
+  if (idx !== -1) {
+    const clsName = classesList[idx].name;
+    classesList.splice(idx, 1);
+    storage.set("attendlyClasses", classesList);
+    $("#manageClassModal")?.classList.remove("open");
+    renderClassesDirectory();
+    toast(`Class ${clsName} deleted successfully`);
+  }
+});
+
+$("#openClassAttendanceBtn")?.addEventListener("click", () => {
+  $("#manageClassModal")?.classList.remove("open");
+  showView("attendance");
 });
 
 // ==========================================
