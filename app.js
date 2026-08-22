@@ -338,7 +338,7 @@ function updateClock() {
 
   const titleEl = $("#pageTitle");
   if (titleEl && $(".view.active")?.id === "overview") {
-    titleEl.innerHTML = `${role === "student" ? "Welcome, Student" : role === "admin" ? "Welcome, Admin" : greeting + ", Teacher"} <span>✦</span>`;
+    titleEl.textContent = `${role === "student" ? "Welcome, Student" : role === "admin" ? "Welcome, Admin" : greeting + ", Teacher"}`;
   }
 
   const camClock = $("#cameraClock");
@@ -377,7 +377,7 @@ function showView(viewId) {
   };
 
   const titleEl = $("#pageTitle");
-  if (titleEl) titleEl.innerHTML = `${titles[viewId] || "Attendly"} <span>✦</span>`;
+  if (titleEl) titleEl.textContent = titles[viewId] || "Attendly";
 
   if (viewId === "overview") renderOverviewBars($("#overviewWeekSelect")?.value || "this");
   if (viewId === "attendance") renderRoster();
