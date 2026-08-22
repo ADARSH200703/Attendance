@@ -381,6 +381,7 @@ function showView(viewId) {
 
   if (viewId === "overview") renderOverviewBars($("#overviewWeekSelect")?.value || "this");
   if (viewId === "attendance") renderRoster();
+  if (viewId === "timetable") renderTimetable();
   if (viewId === "reports") renderReportSummary("class");
   if (viewId === "people") renderPeopleDirectory();
   if (viewId === "profiles") renderProfiles();
@@ -2587,61 +2588,539 @@ $("#savePersonBtn")?.addEventListener("click", async () => {
   });
 });
 
-// Add Timetable Session Modal
+// ==========================================
+// TIMETABLE & CALENDAR INTELLIGENCE SYSTEM
+// ==========================================
+
+let currentTimetableDate = new Date(2026, 7, 20); // Default August 2026 academic calendar
+let timetableActiveTab = "all"; // "all" | "upcoming" | "active" | "past"
+let timetableActiveMode = "grid"; // "grid" | "list"
+
+const timetableSessions = [
+  {
+    id: "sess-1",
+    title: "Algorithms",
+    code: "CS302",
+    class: "CSE 3B",
+    room: "Room 201",
+    faculty: "Dr. R. Verma",
+    day: "MON",
+    date: "2026-08-17",
+    startTime: "09:00",
+    endTime: "10:00",
+    timeDisplay: "09:00 – 10:00 AM",
+    type: "Theory Lecture",
+    color: "e1",
+    status: "past",
+    attendanceRate: 91.2,
+    presentCount: 31,
+    totalCount: 34,
+  },
+  {
+    id: "sess-2",
+    title: "DBMS",
+    code: "CS304",
+    class: "CSE 2B",
+    room: "Room 108",
+    faculty: "Prof. S. Rao",
+    day: "TUE",
+    date: "2026-08-18",
+    startTime: "11:15",
+    endTime: "12:15",
+    timeDisplay: "11:15 – 12:15 PM",
+    type: "Theory Lecture",
+    color: "e2",
+    status: "past",
+    attendanceRate: 87.8,
+    presentCount: 29,
+    totalCount: 33,
+  },
+  {
+    id: "sess-3",
+    title: "Data Structures",
+    code: "CS301",
+    class: "CSE 3A",
+    room: "Room 204",
+    faculty: "Dr. A. Sharma",
+    day: "THU",
+    date: "2026-08-20",
+    startTime: "10:00",
+    endTime: "11:00",
+    timeDisplay: "10:00 – 11:00 AM",
+    type: "Theory Lecture",
+    color: "e3",
+    status: "active",
+    attendanceRate: 93.3,
+    presentCount: 28,
+    totalCount: 30,
+  },
+  {
+    id: "sess-4",
+    title: "DS Lab",
+    code: "CS301L",
+    class: "CSE 3A",
+    room: "Computing Lab 03",
+    faculty: "Dr. A. Sharma & Lab Staff",
+    day: "THU",
+    date: "2026-08-20",
+    startTime: "14:15",
+    endTime: "16:15",
+    timeDisplay: "02:15 – 04:15 PM",
+    type: "Practical Lab",
+    color: "e4",
+    status: "upcoming",
+    attendanceRate: null,
+    presentCount: 0,
+    totalCount: 30,
+  },
+  {
+    id: "sess-5",
+    title: "Algorithms",
+    code: "CS302",
+    class: "CSE 3B",
+    room: "Room 201",
+    faculty: "Dr. R. Verma",
+    day: "FRI",
+    date: "2026-08-21",
+    startTime: "11:15",
+    endTime: "12:15",
+    timeDisplay: "11:15 – 12:15 PM",
+    type: "Theory Lecture",
+    color: "e5",
+    status: "upcoming",
+    attendanceRate: null,
+    presentCount: 0,
+    totalCount: 34,
+  },
+  {
+    id: "sess-6",
+    title: "Operating Systems",
+    code: "CS303",
+    class: "CSE 3A",
+    room: "Room 206",
+    faculty: "Prof. K. Iyer",
+    day: "MON",
+    date: "2026-08-24",
+    startTime: "10:00",
+    endTime: "11:00",
+    timeDisplay: "10:00 – 11:00 AM",
+    type: "Theory Lecture",
+    color: "e2",
+    status: "upcoming",
+    attendanceRate: null,
+    presentCount: 0,
+    totalCount: 30,
+  },
+  {
+    id: "sess-7",
+    title: "Computer Networks",
+    code: "CS305",
+    class: "CSE 3A",
+    room: "Room 204",
+    faculty: "Dr. M. Patel",
+    day: "WED",
+    date: "2026-08-26",
+    startTime: "09:00",
+    endTime: "10:00",
+    timeDisplay: "09:00 – 10:00 AM",
+    type: "Theory Lecture",
+    color: "e1",
+    status: "upcoming",
+    attendanceRate: null,
+    presentCount: 0,
+    totalCount: 30,
+  },
+  {
+    id: "sess-8",
+    title: "Web Technologies",
+    code: "CS306",
+    class: "CSE 3B",
+    room: "Software Lab 02",
+    faculty: "Prof. N. Sen",
+    day: "FRI",
+    date: "2026-08-28",
+    startTime: "14:15",
+    endTime: "16:15",
+    timeDisplay: "02:15 – 04:15 PM",
+    type: "Practical Lab",
+    color: "e4",
+    status: "upcoming",
+    attendanceRate: null,
+    presentCount: 0,
+    totalCount: 34,
+  }
+];
+
+function getWeekDays(date) {
+  const current = new Date(date);
+  const day = current.getDay(); // 0 = Sun, 1 = Mon
+  const diff = current.getDate() - day + (day === 0 ? -6 : 1);
+  const monday = new Date(current.setDate(diff));
+
+  const week = [];
+  for (let i = 0; i < 5; i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    week.push(d);
+  }
+  return week;
+}
+
+function formatShortDate(d) {
+  return d.toLocaleDateString("en-IN", { month: "short", day: "numeric" });
+}
+
+function formatDateISO(d) {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function openSessionModal(sess) {
+  if (!sess) return;
+  const modal = $("#sessionDetailModal");
+  if (!modal) return;
+
+  const title = $("#sessionDetailTitle");
+  const code = $("#sessionDetailCode");
+  const badge = $("#sessionDetailStatusBadge");
+  const cl = $("#sessionDetailClass");
+  const faculty = $("#sessionDetailFaculty");
+  const rm = $("#sessionDetailRoom");
+  const dt = $("#sessionDetailDate");
+  const tm = $("#sessionDetailTime");
+  const type = $("#sessionDetailType");
+  const attRate = $("#sessionDetailAttRate");
+  const attInfo = $("#sessionDetailAttInfo");
+  const fill = $("#sessionDetailProgressFill");
+  const kioskBtn = $("#sessionViewKioskBtn");
+  const role = $("#roleSelect")?.value || "teacher";
+
+  if (title) title.textContent = sess.title;
+  if (code) code.textContent = `${sess.code || 'CS300'} · ${sess.class}`;
+  if (cl) cl.textContent = sess.class;
+  if (faculty) faculty.textContent = sess.faculty || "Faculty · CSE";
+  if (rm) rm.textContent = sess.room;
+  if (dt) dt.textContent = sess.date ? new Date(sess.date).toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", year: "numeric" }) : `${sess.day} (Semester 5)`;
+  if (tm) tm.textContent = sess.timeDisplay;
+  if (type) type.textContent = sess.type || "Theory Lecture";
+
+  if (badge) {
+    if (sess.status === "past") {
+      badge.className = "tag-chip gray";
+      badge.textContent = "✓ Completed";
+    } else if (sess.status === "active") {
+      badge.className = "tag-chip green";
+      badge.textContent = "● Live Active";
+    } else {
+      badge.className = "tag-chip blue";
+      badge.textContent = "⏳ Upcoming";
+    }
+  }
+
+  if (attRate && attInfo && fill) {
+    if (sess.status === "past" && sess.attendanceRate) {
+      attRate.textContent = `${sess.attendanceRate}% Rate`;
+      attInfo.textContent = `${sess.presentCount || 28} of ${sess.totalCount || 30} students recorded present.`;
+      fill.style.width = `${sess.attendanceRate}%`;
+      fill.style.background = "var(--green)";
+    } else if (sess.status === "active") {
+      attRate.textContent = "Live Feed Active";
+      attInfo.textContent = "Biometric Face Kiosk is verifying attendance in real time.";
+      fill.style.width = "93.3%";
+      fill.style.background = "var(--green)";
+    } else {
+      attRate.textContent = "Scheduled";
+      attInfo.textContent = "Attendance verification opens at session start time.";
+      fill.style.width = "0%";
+      fill.style.background = "var(--line)";
+    }
+  }
+
+  if (kioskBtn) {
+    kioskBtn.style.display = sess.status === "active" ? "" : "none";
+  }
+
+  const startBtn = $("#sessionStartAttendanceBtn");
+  if (startBtn) {
+    if (role === "student") {
+      startBtn.textContent = "View My Attendance Record →";
+      startBtn.onclick = () => {
+        modal.classList.remove("open");
+        showView("my-attendance");
+      };
+    } else {
+      startBtn.textContent = "Open Attendance Roster →";
+      startBtn.onclick = () => {
+        modal.classList.remove("open");
+        showView("attendance");
+      };
+    }
+  }
+
+  modal.classList.add("open");
+}
+
+function renderTimetable() {
+  const weekDays = getWeekDays(currentTimetableDate);
+  const monday = weekDays[0];
+  const friday = weekDays[4];
+  const now = new Date();
+  const todayStr = formatDateISO(now);
+
+  // Update Week range label and Date input
+  const rangeLabel = $("#ttWeekRangeLabel");
+  if (rangeLabel) {
+    rangeLabel.textContent = `${formatShortDate(monday)} – ${formatShortDate(friday)}, ${monday.getFullYear()}`;
+  }
+
+  const datePicker = $("#ttDatePicker");
+  if (datePicker) {
+    datePicker.value = formatDateISO(currentTimetableDate);
+  }
+
+  // Update Grid Day Headers with actual dates
+  const dayNames = ["MON", "TUE", "WED", "THU", "FRI"];
+  const headerContainer = $("#timetableWeekdaysHeader");
+  if (headerContainer) {
+    headerContainer.innerHTML = `<span></span>` + weekDays.map((d, i) => {
+      const dStr = formatDateISO(d);
+      const isToday = dStr === todayStr;
+      return `<span data-day="${dayNames[i]}" class="tt-day-head ${isToday ? "current" : ""}">${dayNames[i]} ${d.getDate()}${isToday ? " (Today)" : ""}</span>`;
+    }).join("");
+  }
+
+  const subjectFilter = $("#ttSubjectFilter")?.value || "all";
+
+  // Filter sessions by subject
+  const filtered = timetableSessions.filter((s) => {
+    if (subjectFilter !== "all" && s.title !== subjectFilter) return false;
+    return true;
+  });
+
+  // Render Grid Events
+  const eventsContainer = $("#timetableEvents");
+  if (eventsContainer) {
+    eventsContainer.innerHTML = "";
+    
+    // Day column offset mapping
+    const dayLeftMap = { MON: "1%", TUE: "21%", WED: "41%", THU: "61%", FRI: "81%" };
+    
+    // Time slot top offset calculation
+    const getTopPercent = (timeStr) => {
+      const parts = timeStr.split(":");
+      const h = parseInt(parts[0], 10);
+      const m = parseInt(parts[1] || 0, 10);
+      // Timeline from 09:00 (0%) to 17:00 (100%)
+      const totalMinutes = (h - 9) * 60 + m;
+      return Math.max(2, Math.min(84, (totalMinutes / 480) * 100));
+    };
+
+    filtered.forEach((sess) => {
+      const ev = document.createElement("div");
+      ev.className = `event ${sess.color || "e1"}`;
+      ev.style.left = dayLeftMap[sess.day] || "1%";
+      ev.style.top = `${getTopPercent(sess.startTime)}%`;
+
+      let statusPill = "";
+      if (sess.status === "past") statusPill = `<span class="event-status-pill" style="color:var(--muted);">✓ Past</span>`;
+      else if (sess.status === "active") statusPill = `<span class="event-status-pill" style="color:var(--green);">● Live</span>`;
+      else statusPill = `<span class="event-status-pill" style="color:var(--blue-text);">⏳ Upcoming</span>`;
+
+      ev.innerHTML = `
+        <b>${escapeHtml(sess.title)}</b>
+        <small>${escapeHtml(sess.class)} · ${escapeHtml(sess.room)}</small>
+        ${statusPill}
+      `;
+
+      ev.addEventListener("click", () => openSessionModal(sess));
+      eventsContainer.appendChild(ev);
+    });
+  }
+
+  // Update counts for List View tabs
+  const allCount = filtered.length;
+  const upcomingCount = filtered.filter(s => s.status === "upcoming").length;
+  const activeCount = filtered.filter(s => s.status === "active").length;
+  const pastCount = filtered.filter(s => s.status === "past").length;
+
+  if ($("#ttCountAll")) $("#ttCountAll").textContent = allCount;
+  if ($("#ttCountUpcoming")) $("#ttCountUpcoming").textContent = upcomingCount;
+  if ($("#ttCountActive")) $("#ttCountActive").textContent = activeCount;
+  if ($("#ttCountPast")) $("#ttCountPast").textContent = pastCount;
+
+  // Render Agenda / List Feed
+  const feed = $("#timetableSessionsFeed");
+  if (feed) {
+    feed.innerHTML = "";
+    const listFiltered = filtered.filter((s) => {
+      if (timetableActiveTab === "upcoming") return s.status === "upcoming";
+      if (timetableActiveTab === "active") return s.status === "active";
+      if (timetableActiveTab === "past") return s.status === "past";
+      return true;
+    });
+
+    if (listFiltered.length === 0) {
+      feed.innerHTML = `
+        <div style="padding:40px 20px; text-align:center; color:var(--muted); font-size:13px;">
+          <div style="font-size:26px; margin-bottom:8px;">📅</div>
+          <strong>No sessions found for this category</strong>
+          <p style="margin:4px 0 0; font-size:12px;">Try switching tabs or resetting the subject filter.</p>
+        </div>
+      `;
+    } else {
+      listFiltered.forEach((sess) => {
+        const card = document.createElement("div");
+        card.className = `tt-session-card ${sess.color || "e1"}`;
+        
+        let statusBadge = "";
+        if (sess.status === "past") {
+          statusBadge = `<span class="tag-chip gray">✓ Completed · ${sess.attendanceRate || 90}% Att.</span>`;
+        } else if (sess.status === "active") {
+          statusBadge = `<span class="tag-chip green">● Active Now · Kiosk Live</span>`;
+        } else {
+          statusBadge = `<span class="tag-chip blue">⏳ Upcoming</span>`;
+        }
+
+        const dateFormatted = sess.date ? new Date(sess.date).toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" }) : sess.day;
+
+        card.innerHTML = `
+          <div class="tt-card-main">
+            <div class="tt-card-time">
+              <strong>${escapeHtml(sess.timeDisplay)}</strong>
+              <small>${escapeHtml(dateFormatted)} (${sess.day})</small>
+            </div>
+            <div class="tt-card-info">
+              <h4>${escapeHtml(sess.title)} <small style="font-weight:normal;color:var(--muted);font-size:12px;">(${escapeHtml(sess.code || 'CS300')})</small></h4>
+              <p>${escapeHtml(sess.class)} · ${escapeHtml(sess.room)} · <em>${escapeHtml(sess.faculty || 'Faculty')}</em></p>
+            </div>
+          </div>
+          <div class="tt-card-right">
+            ${statusBadge}
+            <button class="outline small" onclick="event.stopPropagation();">Details →</button>
+          </div>
+        `;
+
+        card.addEventListener("click", () => openSessionModal(sess));
+        feed.appendChild(card);
+      });
+    }
+  }
+}
+
+// Timetable Toolbar Event Listeners
+$("#ttPrevWeekBtn")?.addEventListener("click", () => {
+  currentTimetableDate.setDate(currentTimetableDate.getDate() - 7);
+  renderTimetable();
+});
+
+$("#ttNextWeekBtn")?.addEventListener("click", () => {
+  currentTimetableDate.setDate(currentTimetableDate.getDate() + 7);
+  renderTimetable();
+});
+
+$("#ttTodayBtn")?.addEventListener("click", () => {
+  currentTimetableDate = new Date(2026, 7, 20);
+  renderTimetable();
+  toast("Jumped to current week");
+});
+
+$("#ttDatePicker")?.addEventListener("change", (e) => {
+  if (e.target.value) {
+    const parts = e.target.value.split("-");
+    currentTimetableDate = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+    renderTimetable();
+  }
+});
+
+$("#ttViewGridBtn")?.addEventListener("click", () => {
+  timetableActiveMode = "grid";
+  $("#ttViewGridBtn")?.classList.add("active");
+  $("#ttViewListBtn")?.classList.remove("active");
+  if ($("#timetableGridView")) $("#timetableGridView").style.display = "";
+  if ($("#timetableListView")) $("#timetableListView").style.display = "none";
+  renderTimetable();
+});
+
+$("#ttViewListBtn")?.addEventListener("click", () => {
+  timetableActiveMode = "list";
+  $("#ttViewListBtn")?.classList.add("active");
+  $("#ttViewGridBtn")?.classList.remove("active");
+  if ($("#timetableGridView")) $("#timetableGridView").style.display = "none";
+  if ($("#timetableListView")) $("#timetableListView").style.display = "";
+  renderTimetable();
+});
+
+$("#ttSubjectFilter")?.addEventListener("change", renderTimetable);
+
+$$(".tt-subtab").forEach((tab) => {
+  tab.addEventListener("click", (e) => {
+    $$(".tt-subtab").forEach((t) => t.classList.remove("active"));
+    tab.classList.add("active");
+    timetableActiveTab = tab.dataset.ttTab || "all";
+    renderTimetable();
+  });
+});
+
+// Add Timetable Session Modal (Admin Only)
 $("#addSessionBtn")?.addEventListener("click", () => $("#addSessionModal")?.classList.add("open"));
 $("#closeSessionModal")?.addEventListener("click", () => $("#addSessionModal")?.classList.remove("open"));
 $("#cancelSessionBtn")?.addEventListener("click", () => $("#addSessionModal")?.classList.remove("open"));
 
 $("#saveSessionBtn")?.addEventListener("click", () => {
   const sub = $("#newSessionSubject")?.value.trim();
-  const cls = $("#newSessionClass")?.value.trim();
-  const room = $("#newSessionRoom")?.value.trim();
-  const day = $("#newSessionDay")?.value;
-  const time = $("#newSessionTime")?.value;
+  const cls = $("#newSessionClass")?.value.trim() || "CSE 3A";
+  const room = $("#newSessionRoom")?.value.trim() || "Room 204";
+  const day = $("#newSessionDay")?.value || "MON";
+  const time = $("#newSessionTime")?.value || "09:00";
 
   if (!sub) {
     toast("Please enter a subject name");
     return;
   }
 
-  // Create event element
-  const events = $("#timetableEvents");
-  if (events) {
-    const ev = document.createElement("div");
-    ev.className = "event e1";
-    ev.style.left = "42%";
-    ev.style.top = "70%";
-    ev.innerHTML = `<b>${sub}</b><small>${cls} · ${room}</small>`;
-    events.appendChild(ev);
-  }
+  const timeMap = {
+    "09:00": { display: "09:00 – 10:00 AM", end: "10:00" },
+    "10:00": { display: "10:00 – 11:00 AM", end: "11:00" },
+    "11:15": { display: "11:15 – 12:15 PM", end: "12:15" },
+    "14:15": { display: "02:15 – 03:15 PM", end: "15:15" },
+  };
 
+  const newSess = {
+    id: "sess-" + Date.now(),
+    title: sub,
+    code: "CS" + Math.floor(300 + Math.random() * 90),
+    class: cls,
+    room: room,
+    faculty: "Faculty · CSE",
+    day: day,
+    date: formatDateISO(currentTimetableDate),
+    startTime: time,
+    endTime: timeMap[time]?.end || "10:00",
+    timeDisplay: timeMap[time]?.display || `${time} Session`,
+    type: "Theory Lecture",
+    color: "e" + (Math.floor(Math.random() * 5) + 1),
+    status: "upcoming",
+    attendanceRate: null,
+    presentCount: 0,
+    totalCount: 30,
+  };
+
+  timetableSessions.push(newSess);
   $("#addSessionModal")?.classList.remove("open");
-  toast(`Added ${sub} to academic schedule`);
+  if ($("#newSessionSubject")) $("#newSessionSubject").value = "";
+  toast(`Added ${sub} to academic timetable`);
   playSound("success");
+  renderTimetable();
 });
 
-// Timetable Event Popover
-$$(".event").forEach((ev) => {
-  ev.addEventListener("click", () => {
-    const modal = $("#sessionDetailModal");
-    const title = $("#sessionDetailTitle");
-    const cl = $("#sessionDetailClass");
-    const rm = $("#sessionDetailRoom");
-    const tm = $("#sessionDetailTime");
-
-    if (title) title.textContent = ev.dataset.title || ev.querySelector("b")?.textContent || "Class Details";
-    if (cl) cl.textContent = ev.dataset.class || "CSE 3A";
-    if (rm) rm.textContent = ev.dataset.room || "Room 204";
-    if (tm) tm.textContent = ev.dataset.time || "10:00 - 11:00 AM";
-
-    modal?.classList.add("open");
-  });
-});
-
+// Modal close handlers
 $("#closeDetailModal")?.addEventListener("click", () => $("#sessionDetailModal")?.classList.remove("open"));
-$("#sessionStartAttendanceBtn")?.addEventListener("click", () => {
+$("#sessionCloseBtn")?.addEventListener("click", () => $("#sessionDetailModal")?.classList.remove("open"));
+$("#sessionViewKioskBtn")?.addEventListener("click", () => {
   $("#sessionDetailModal")?.classList.remove("open");
-  showView("attendance");
+  showView("kiosk");
 });
 
 // Attention & Notifications

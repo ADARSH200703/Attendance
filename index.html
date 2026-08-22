@@ -538,22 +538,55 @@
       <section id="timetable" class="view">
         <div class="section-top">
           <div>
-            <p class="eyebrow">ACADEMIC SCHEDULE</p>
-            <h2>My timetable</h2>
-            <p>Weekly teaching matrix · Semester 5 (2026)</p>
+            <p class="eyebrow">ACADEMIC SCHEDULE &amp; CALENDAR</p>
+            <h2>Academic timetable</h2>
+            <p>Interactive weekly matrix, past records &amp; upcoming session schedule</p>
           </div>
           <div class="timetable-top-actions">
-            <button class="primary small" id="addSessionBtn">+ Add session</button>
+            <button class="primary small admin-only" id="addSessionBtn" style="display:none;">+ Add session</button>
           </div>
         </div>
-        <div class="panel timetable">
-          <div class="weekdays">
+
+        <!-- Timetable Toolbar: Calendar & Week Navigator, View Switcher, Filter -->
+        <div class="timetable-toolbar panel">
+          <div class="timetable-nav-group">
+            <button class="outline small" id="ttPrevWeekBtn" title="Previous Week">‹ Prev Week</button>
+            <div class="timetable-date-picker-wrap">
+              <span class="cal-icon">📅</span>
+              <input type="date" id="ttDatePicker" class="tt-date-input" title="Select date to jump to week" />
+              <strong id="ttWeekRangeLabel">Aug 17 – Aug 21, 2026</strong>
+            </div>
+            <button class="outline small" id="ttNextWeekBtn" title="Next Week">Next Week ›</button>
+            <button class="outline small" id="ttTodayBtn" title="Jump to Current Week">Today</button>
+          </div>
+
+          <div class="timetable-controls-group">
+            <div class="tt-view-switch">
+              <button class="tt-switch-btn active" id="ttViewGridBtn" data-mode="grid">▦ Weekly Matrix</button>
+              <button class="tt-switch-btn" id="ttViewListBtn" data-mode="list">📋 Sessions Agenda</button>
+            </div>
+            <select id="ttSubjectFilter" class="tt-filter-select" aria-label="Filter by subject">
+              <option value="all">All Subjects &amp; Labs</option>
+              <option value="Data Structures">Data Structures (CS301)</option>
+              <option value="Algorithms">Algorithms (CS302)</option>
+              <option value="DBMS">DBMS (CS304)</option>
+              <option value="Operating Systems">Operating Systems (CS303)</option>
+              <option value="Computer Networks">Computer Networks (CS305)</option>
+              <option value="Web Technologies">Web Technologies (CS306)</option>
+              <option value="DS Lab">DS Lab (CS301L)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Weekly Matrix Grid View -->
+        <div class="panel timetable" id="timetableGridView">
+          <div class="weekdays" id="timetableWeekdaysHeader">
             <span></span>
-            <span>MON 17</span>
-            <span>TUE 18</span>
-            <span>WED 19</span>
-            <span class="current">THU 20 (Today)</span>
-            <span>FRI 21</span>
+            <span data-day="MON" class="tt-day-head">MON 17</span>
+            <span data-day="TUE" class="tt-day-head">TUE 18</span>
+            <span data-day="WED" class="tt-day-head">WED 19</span>
+            <span data-day="THU" class="tt-day-head current">THU 20 (Today)</span>
+            <span data-day="FRI" class="tt-day-head">FRI 21</span>
           </div>
           <div class="schedule">
             <div class="times">
@@ -564,30 +597,21 @@
               <span>1:00 PM</span>
               <span>2:00 PM</span>
               <span>3:00 PM</span>
+              <span>4:00 PM</span>
             </div>
-            <div class="events" id="timetableEvents">
-              <div class="event e1" style="left:2%;top:12%" data-title="Algorithms" data-class="CSE 3B" data-room="Room 201" data-time="09:00 - 10:00 AM">
-                <b>Algorithms</b>
-                <small>CSE 3B · 201</small>
-              </div>
-              <div class="event e2" style="left:22%;top:30%" data-title="DBMS" data-class="CSE 2B" data-room="Room 108" data-time="11:15 - 12:15 PM">
-                <b>DBMS</b>
-                <small>CSE 2B · 108</small>
-              </div>
-              <div class="event e3" style="left:42%;top:12%" data-title="Data Structures" data-class="CSE 3A" data-room="Room 204" data-time="10:00 - 11:00 AM">
-                <b>Data Structures</b>
-                <small>CSE 3A · 204 (Active)</small>
-              </div>
-              <div class="event e4" style="left:62%;top:52%" data-title="DS Lab" data-class="CSE 3A" data-room="Computing Lab 03" data-time="02:15 - 04:15 PM">
-                <b>DS Lab</b>
-                <small>CSE 3A · Lab 03</small>
-              </div>
-              <div class="event e5" style="left:82%;top:30%" data-title="Algorithms" data-class="CSE 3B" data-room="Room 201" data-time="11:15 - 12:15 PM">
-                <b>Algorithms</b>
-                <small>CSE 3B · 201</small>
-              </div>
-            </div>
+            <div class="events" id="timetableEvents"></div>
           </div>
+        </div>
+
+        <!-- Agenda / List View -->
+        <div class="panel timetable-list-container" id="timetableListView" style="display:none;">
+          <div class="tt-list-subtabs">
+            <button class="tt-subtab active" data-tt-tab="all">All Sessions (<span id="ttCountAll">0</span>)</button>
+            <button class="tt-subtab" data-tt-tab="upcoming">Upcoming (<span id="ttCountUpcoming">0</span>)</button>
+            <button class="tt-subtab" data-tt-tab="active">Today / Live (<span id="ttCountActive">0</span>)</button>
+            <button class="tt-subtab" data-tt-tab="past">Past Records (<span id="ttCountPast">0</span>)</button>
+          </div>
+          <div class="tt-sessions-feed" id="timetableSessionsFeed"></div>
         </div>
       </section>
 
@@ -1210,16 +1234,57 @@
 
   <!-- Event Details Popover/Modal -->
   <div class="modal-backdrop" id="sessionDetailModal">
-    <div class="modal-card">
+    <div class="modal-card tt-detail-modal-card">
       <div class="modal-head">
-        <h3 id="sessionDetailTitle">Class Details</h3>
+        <div>
+          <h3 id="sessionDetailTitle">Class Details</h3>
+          <p class="modal-sub" id="sessionDetailCode" style="margin:2px 0 0;font-size:12px;color:var(--muted);">CS301 · Course Session</p>
+        </div>
+        <span id="sessionDetailStatusBadge" class="tag-chip green">● Active</span>
         <button class="modal-close" id="closeDetailModal">✕</button>
       </div>
       <div class="session-detail-body">
-        <p><strong>Class:</strong> <span id="sessionDetailClass">CSE 3A</span></p>
-        <p><strong>Room:</strong> <span id="sessionDetailRoom">Room 204</span></p>
-        <p><strong>Timing:</strong> <span id="sessionDetailTime">10:00 AM - 11:00 AM</span></p>
+        <div class="tt-modal-grid">
+          <div class="tt-modal-row">
+            <span class="tt-label">Class Cohort</span>
+            <strong id="sessionDetailClass">CSE 3A</strong>
+          </div>
+          <div class="tt-modal-row">
+            <span class="tt-label">Faculty / Instructor</span>
+            <strong id="sessionDetailFaculty">Dr. A. Sharma</strong>
+          </div>
+          <div class="tt-modal-row">
+            <span class="tt-label">Room / Lab</span>
+            <strong id="sessionDetailRoom">Room 204</strong>
+          </div>
+          <div class="tt-modal-row">
+            <span class="tt-label">Date &amp; Day</span>
+            <strong id="sessionDetailDate">Thu, 20 Aug 2026</strong>
+          </div>
+          <div class="tt-modal-row">
+            <span class="tt-label">Timing</span>
+            <strong id="sessionDetailTime">10:00 AM - 11:00 AM</strong>
+          </div>
+          <div class="tt-modal-row">
+            <span class="tt-label">Session Type</span>
+            <strong id="sessionDetailType">Theory Lecture</strong>
+          </div>
+        </div>
+
+        <div class="tt-modal-attendance-card" id="sessionDetailAttendanceCard">
+          <div class="tt-att-header">
+            <strong>Attendance Intelligence</strong>
+            <span id="sessionDetailAttRate" class="tt-att-rate-badge">93.3% Rate</span>
+          </div>
+          <p id="sessionDetailAttInfo">28 of 30 students verified via Face Kiosk</p>
+          <div class="tt-modal-progress-bar">
+            <div class="tt-modal-progress-fill" id="sessionDetailProgressFill" style="width:93.3%;"></div>
+          </div>
+        </div>
+
         <div class="modal-actions">
+          <button class="outline" id="sessionCloseBtn">Close</button>
+          <button class="secondary-btn" id="sessionViewKioskBtn" style="display:none;" data-view="kiosk">Launch Face Kiosk ◉</button>
           <button class="primary" id="sessionStartAttendanceBtn">Open Attendance Roster →</button>
         </div>
       </div>
