@@ -2349,29 +2349,86 @@ select option {
 .report-table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 10px;
+  margin-top: 12px;
 }
 
 .report-table th, .report-table td {
-  padding: 10px 14px;
+  padding: 12px 16px;
   text-align: left;
   border-bottom: 1px solid var(--line);
-  font-size: 12.5px;
+  font-size: 13px;
+  transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), color 0.15s ease;
 }
 
 .report-table th {
-  background: #f8fafc;
-  color: #64748b;
+  background: var(--table-header-bg);
+  color: var(--muted);
   font-weight: 700;
   font-size: 11px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 
-.report-table tr:hover td {
-  background: #f8fafc;
+.report-table tbody tr {
+  transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.report-table tbody tr:hover td {
+  background: var(--hover-bg);
+  color: var(--ink);
+}
+
+/* DEFAULTER ROW HIGHLIGHT - LIGHT MODE */
 .defaulter-row td {
   background: #fff1f2;
+  border-bottom-color: #fecdd3;
+  color: #881337;
+}
+
+.defaulter-row:hover td {
+  background: #ffe4e6 !important;
+  color: #4c0519 !important;
+}
+
+.defaulter-rate {
+  color: #e11d48;
+  font-weight: 800;
+}
+
+.defaulter-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: #ffe4e6;
+  color: #be123c;
+  font-weight: 700;
+  font-size: 11px;
+  border: 1px solid #fda4af;
+}
+
+.standing-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: #f0fdf4;
+  color: #15803d;
+  font-weight: 600;
+  font-size: 11px;
+  border: 1px solid #bbf7d0;
+}
+
+.defaulter-shortage-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  background: #fee2e2;
+  color: #dc2626;
+  font-weight: 700;
+  font-size: 11px;
 }
 
 /* LEAVES */
@@ -3498,6 +3555,80 @@ body, .sidebar, main, .panel, article, .modal-card, input, select, textarea, .re
   background: rgba(34, 197, 94, 0.18);
   color: #4ade80;
   border-color: rgba(34, 197, 94, 0.3);
+}
+
+/* ==========================================================================
+   DARK MODE OVERRIDES: REPORT TAB & CLASS ATTENDANCE AUDIT TABLE
+   ========================================================================== */
+[data-theme="dark"] .reports-table-panel {
+  background: var(--panel-bg);
+  border-color: var(--line);
+}
+
+[data-theme="dark"] .report-table th {
+  background: var(--table-header-bg);
+  color: #a1a1aa;
+  border-bottom-color: var(--line);
+}
+
+[data-theme="dark"] .report-table td {
+  border-bottom-color: var(--line);
+  color: var(--ink);
+}
+
+/* Standard row hover animation in dark mode: luminous teal-tinted highlight */
+[data-theme="dark"] .report-table tbody tr:hover td {
+  background: rgba(20, 184, 166, 0.18) !important;
+  color: #ffffff !important;
+}
+
+/* Defaulter row highlight in dark mode: rich, high-contrast, fully visible crimson */
+[data-theme="dark"] .defaulter-row td {
+  background: rgba(244, 63, 94, 0.18) !important;
+  border-bottom-color: rgba(244, 63, 94, 0.32) !important;
+  color: #ffe4e6 !important;
+}
+
+/* Defaulter row hover animation in dark mode: vivid luminous highlight with glowing outline */
+[data-theme="dark"] .defaulter-row:hover td {
+  background: rgba(244, 63, 94, 0.34) !important;
+  color: #ffffff !important;
+  box-shadow: inset 0 0 0 1px rgba(251, 113, 133, 0.45);
+}
+
+[data-theme="dark"] .defaulter-rate {
+  color: #fb7185;
+  font-weight: 800;
+  text-shadow: 0 0 10px rgba(251, 113, 133, 0.5);
+}
+
+[data-theme="dark"] .defaulter-status-pill {
+  background: rgba(244, 63, 94, 0.25);
+  color: #fb7185;
+  border: 1px solid rgba(251, 113, 133, 0.55);
+  font-weight: 700;
+  box-shadow: 0 0 10px rgba(244, 63, 94, 0.25);
+}
+
+[data-theme="dark"] .standing-status-pill {
+  background: rgba(34, 197, 94, 0.18);
+  color: #4ade80;
+  border: 1px solid rgba(74, 222, 128, 0.4);
+  font-weight: 600;
+}
+
+[data-theme="dark"] .defaulter-shortage-badge {
+  background: rgba(244, 63, 94, 0.22);
+  color: #fb7185;
+  border: 1px solid rgba(251, 113, 133, 0.4);
+}
+
+[data-theme="dark"] .report-table code {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f4f4f5;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 2px 6px;
+  border-radius: 4px;
 }
 
 [data-theme="dark"] .modal-card {

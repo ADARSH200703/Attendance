@@ -2203,11 +2203,11 @@ function renderReportSummary(type = "class") {
             .map(
               (s) => `
             <tr class="${s.rate < 75 ? "defaulter-row" : ""}">
-              <td><code>${s.id}</code></td>
-              <td><strong>${s.name}</strong></td>
-              <td><b>${s.rate}%</b></td>
-              <td>${s.status.toUpperCase()} (${s.time})</td>
-              <td>${s.rate < 75 ? "<span style='color:#dc2626;font-weight:700;'>⚠ Defaulter (<75%)</span>" : "<span style='color:#16a34a;'>Good Standing</span>"}</td>
+              <td><code>${escapeHtml(s.id)}</code></td>
+              <td><strong>${escapeHtml(s.name)}</strong></td>
+              <td><b class="rate-val ${s.rate < 75 ? "defaulter-rate" : ""}">${s.rate}%</b></td>
+              <td><span class="report-today-status">${escapeHtml(s.status.toUpperCase())} <small style="opacity:0.75;">(${escapeHtml(s.time)})</small></span></td>
+              <td>${s.rate < 75 ? "<span class='defaulter-status-pill'>⚠ Defaulter (&lt;75%)</span>" : "<span class='standing-status-pill'>✓ Good Standing</span>"}</td>
             </tr>
           `
             )
@@ -2233,22 +2233,22 @@ function renderReportSummary(type = "class") {
         <tbody>
           <tr>
             <td><code>CS-301</code></td>
-            <td><strong>Data Structures & Algorithms</strong></td>
-            <td>Adarsh Sharma</td>
+            <td><strong>Data Structures &amp; Algorithms</strong></td>
+            <td>Dr. A. Sharma</td>
             <td>28 Sessions</td>
             <td><strong style="color:var(--green)">88.4%</strong></td>
           </tr>
           <tr>
             <td><code>CS-302</code></td>
             <td><strong>Database Management Systems</strong></td>
-            <td>Sarah Adams</td>
+            <td>Prof. S. Rao</td>
             <td>24 Sessions</td>
             <td><strong style="color:var(--green)">84.2%</strong></td>
           </tr>
           <tr>
             <td><code>CS-303</code></td>
             <td><strong>Data Structures Lab</strong></td>
-            <td>Adarsh Sharma</td>
+            <td>Dr. A. Sharma</td>
             <td>14 Sessions</td>
             <td><strong style="color:var(--green)">92.1%</strong></td>
           </tr>
@@ -2276,11 +2276,11 @@ function renderReportSummary(type = "class") {
             .map(
               (s) => `
             <tr class="defaulter-row">
-              <td><code>${s.id}</code></td>
-              <td><strong>${s.name}</strong></td>
-              <td><b style="color:#dc2626">${s.rate}%</b></td>
-              <td>${75 - s.rate}% required</td>
-              <td><button class="outline small notify-btn" data-name="${s.name}">Send Parent Notice</button></td>
+              <td><code>${escapeHtml(s.id)}</code></td>
+              <td><strong>${escapeHtml(s.name)}</strong></td>
+              <td><b class="rate-val defaulter-rate">${s.rate}%</b></td>
+              <td><span class="defaulter-shortage-badge">-${(75 - s.rate).toFixed(1)}% needed</span></td>
+              <td><button class="outline small notify-btn" data-name="${escapeHtml(s.name)}">Send Parent Notice</button></td>
             </tr>
           `
             )
