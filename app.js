@@ -36,9 +36,117 @@ const defaultStudents = [
 ];
 
 const defaultLeaves = [
-  { name: "Priya Mehta", class: "CSE 3A", type: "Medical leave", dates: "19–21 Aug", initials: "PM" },
-  { name: "Karan Malhotra", class: "CSE 2B", type: "Personal leave", dates: "21 Aug", initials: "KM" },
-  { name: "Nisha Patel", class: "CSE 3A", type: "Duty leave (Sports)", dates: "20–22 Aug", initials: "NP" },
+  {
+    id: "leave-1",
+    name: "Priya Mehta",
+    rollNo: "CSE/23/046",
+    class: "CSE 3A",
+    type: "Medical Leave",
+    dates: "19–21 Aug 2026",
+    days: "3 days",
+    reason: "Diagnosed with acute viral fever. Doctor advised complete rest for 3 days. Medical certificate attached.",
+    initials: "PM",
+    submittedTime: "15m ago",
+    status: "pending",
+  },
+  {
+    id: "leave-2",
+    name: "Karan Malhotra",
+    rollNo: "CSE/23/022",
+    class: "CSE 2B",
+    type: "Personal Leave",
+    dates: "21 Aug 2026",
+    days: "1 day",
+    reason: "Attending elder sibling's wedding ceremony in home town.",
+    initials: "KM",
+    submittedTime: "1h ago",
+    status: "pending",
+  },
+  {
+    id: "leave-3",
+    name: "Nisha Patel",
+    rollNo: "CSE/23/038",
+    class: "CSE 3A",
+    type: "Duty Leave (Sports)",
+    dates: "20–22 Aug 2026",
+    days: "3 days",
+    reason: "Selected to represent university at State Inter-College Badminton Championship.",
+    initials: "NP",
+    submittedTime: "3h ago",
+    status: "pending",
+  },
+];
+
+const defaultNotifications = [
+  {
+    id: "notif-kiosk-1",
+    category: "kiosk",
+    icon: "◉",
+    iconColor: "green-icon",
+    title: "Biometric Sync Complete",
+    time: "2m ago",
+    message: "28 students auto-verified for CSE 3A Data Structures lecture session.",
+    unread: true,
+    actionType: "view_kiosk",
+  },
+  {
+    id: "notif-leave-1",
+    category: "leave",
+    icon: "◱",
+    iconColor: "orange-icon",
+    title: "New Leave Request: Priya Mehta",
+    time: "15m ago",
+    message: "Priya Mehta (CSE 3A) requested 3 days Medical Leave (19–21 Aug).",
+    leaveId: "leave-1",
+    unread: true,
+    actionType: "leave_decision",
+  },
+  {
+    id: "notif-leave-2",
+    category: "leave",
+    icon: "◱",
+    iconColor: "orange-icon",
+    title: "New Leave Request: Karan Malhotra",
+    time: "1h ago",
+    message: "Karan Malhotra (CSE 2B) requested 1 day Personal Leave (21 Aug).",
+    leaveId: "leave-2",
+    unread: true,
+    actionType: "leave_decision",
+  },
+  {
+    id: "notif-leave-3",
+    category: "leave",
+    icon: "◱",
+    iconColor: "orange-icon",
+    title: "New Leave Request: Nisha Patel",
+    time: "3h ago",
+    message: "Nisha Patel (CSE 3A) requested 3 days Duty Leave (Sports) (20–22 Aug).",
+    leaveId: "leave-3",
+    unread: true,
+    actionType: "leave_decision",
+  },
+  {
+    id: "notif-alert-1",
+    category: "alert",
+    icon: "⚠",
+    iconColor: "red-icon",
+    title: "Low Attendance Threshold",
+    time: "4h ago",
+    message: "Rahul Joshi (CSE/23/045) dropped to 68% attendance (below 75% cutoff).",
+    unread: true,
+    actionType: "view_reports",
+  },
+  {
+    id: "notif-kiosk-2",
+    category: "kiosk",
+    icon: "⛨",
+    iconColor: "blue-icon",
+    title: "Local Security Sandbox",
+    time: "Yesterday",
+    message: "Biometric templates securely cached in local storage. No raw video transmitted.",
+    unread: false,
+    actionType: "info",
+  },
 ];
 
 // Utility shortcuts
@@ -398,6 +506,7 @@ function showView(viewId) {
   if (viewId === "attendance") renderRoster();
   if (viewId === "timetable") renderTimetable();
   if (viewId === "reports") renderReportSummary("class");
+  if (viewId === "leaves") renderLeaves();
   if (viewId === "people") renderPeopleDirectory();
   if (viewId === "profiles") renderProfiles();
   if (viewId === "classes") renderClassesDirectory();
@@ -2332,69 +2441,190 @@ $("#downloadCurrentReportBtn")?.addEventListener("click", exportAttendanceCSV);
    LEAVES, ATTENTION & PEOPLE DIRECTORY
    ========================================================================== */
 
+let currentLeaves = storage.get("attendlyLeaves", defaultLeaves);
+let currentNotifications = storage.get("attendlyNotifications", defaultNotifications);
+let leaveActiveFilter = "all";
+
+function processLeaveDecision(leaveId, action) {
+  currentLeaves = storage.get("attendlyLeaves", defaultLeaves);
+  currentNotifications = storage.get("attendlyNotifications", defaultNotifications);
+
+  const leaveIdx = currentLeaves.findIndex((l) => l.id === leaveId || l.name === leaveId);
+  let leaveItem = null;
+
+  if (leaveIdx !== -1) {
+    leaveItem = currentLeaves[leaveIdx];
+    currentLeaves.splice(leaveIdx, 1);
+    storage.set("attendlyLeaves", currentLeaves);
+  }
+
+  // Remove corresponding leave notification(s) from notification center
+  currentNotifications = currentNotifications.filter((n) => {
+    if (n.leaveId && n.leaveId === leaveId) return false;
+    if (leaveItem && n.title && n.title.includes(leaveItem.name)) return false;
+    if (leaveItem && n.message && n.message.includes(leaveItem.name)) return false;
+    return true;
+  });
+  storage.set("attendlyNotifications", currentNotifications);
+
+  // Update both the Leave requests view and Notification Bell dropdown
+  renderLeaves();
+  renderNotifications();
+
+  // If student was in the Overview Attention list (e.g. Priya Mehta), update Attention list
+  const attentionItems = $$("#attentionGrid .attention-item");
+  attentionItems.forEach((item) => {
+    if (leaveItem && item.textContent.includes(leaveItem.name)) {
+      item.remove();
+      const countEl = $("#attentionCount");
+      if (countEl) {
+        const cur = Math.max(0, parseInt(countEl.textContent || "1") - 1);
+        countEl.textContent = cur;
+      }
+    }
+  });
+
+  const studentName = leaveItem ? leaveItem.name : "Student";
+  if (action === "approved") {
+    toast(`✓ Leave request for ${studentName} approved and attendance recorded`);
+    playSound("success");
+    if (leaveItem && leaveItem.id) {
+      api.updateLeaveStatus(leaveItem.id, "approved");
+    }
+  } else {
+    toast(`✕ Leave request for ${studentName} declined`);
+    playSound("beep");
+    if (leaveItem && leaveItem.id) {
+      api.updateLeaveStatus(leaveItem.id, "declined");
+    }
+  }
+}
+
 function renderLeaves() {
   const list = $("#leaveList");
   if (!list) return;
 
-  const currentLeaves = storage.get("attendlyLeaves", defaultLeaves);
+  currentLeaves = storage.get("attendlyLeaves", defaultLeaves);
+  const q = ($("#leaveSearchInput")?.value || "").toLowerCase().trim();
+
+  // Update Summary Stats Counters
+  const pendingCountEl = $("#statLeavesPendingCount");
+  const medCountEl = $("#statLeavesMedicalCount");
+  const dutyCountEl = $("#statLeavesDutyCount");
+  const personalCountEl = $("#statLeavesPersonalCount");
+  const tabAllCountEl = $("#leaveTabCountAll");
   const badge = $("#leaveBadge");
   const statLeaves = $("#statPendingLeaves");
 
-  if (badge) badge.textContent = currentLeaves.length;
-  if (statLeaves) statLeaves.textContent = String(currentLeaves.length).padStart(2, "0");
+  const totalPending = currentLeaves.length;
+  const medCount = currentLeaves.filter((l) => (l.type || "").toLowerCase().includes("medical")).length;
+  const dutyCount = currentLeaves.filter((l) => (l.type || "").toLowerCase().includes("duty") || (l.type || "").toLowerCase().includes("sports")).length;
+  const personalCount = currentLeaves.filter((l) => (l.type || "").toLowerCase().includes("personal")).length;
 
-  if (currentLeaves.length === 0) {
-    list.innerHTML = `<div style="padding: 24px; text-align: center; color: var(--muted)">All leave requests have been reviewed!</div>`;
+  if (pendingCountEl) pendingCountEl.textContent = String(totalPending).padStart(2, "0");
+  if (medCountEl) medCountEl.textContent = String(medCount).padStart(2, "0");
+  if (dutyCountEl) dutyCountEl.textContent = String(dutyCount).padStart(2, "0");
+  if (personalCountEl) personalCountEl.textContent = String(personalCount).padStart(2, "0");
+  if (tabAllCountEl) tabAllCountEl.textContent = totalPending;
+  if (badge) badge.textContent = totalPending;
+  if (statLeaves) statLeaves.textContent = String(totalPending).padStart(2, "0");
+
+  const filtered = currentLeaves.filter((l) => {
+    if (leaveActiveFilter !== "all") {
+      const typeStr = (l.type || "").toLowerCase();
+      if (leaveActiveFilter === "Medical" && !typeStr.includes("medical")) return false;
+      if (leaveActiveFilter === "Duty" && (!typeStr.includes("duty") && !typeStr.includes("sports"))) return false;
+      if (leaveActiveFilter === "Personal" && !typeStr.includes("personal")) return false;
+    }
+    if (q) {
+      const matchName = (l.name || "").toLowerCase().includes(q);
+      const matchRoll = (l.rollNo || "").toLowerCase().includes(q);
+      const matchClass = (l.class || "").toLowerCase().includes(q);
+      const matchReason = (l.reason || "").toLowerCase().includes(q);
+      if (!matchName && !matchRoll && !matchClass && !matchReason) return false;
+    }
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    if (currentLeaves.length === 0) {
+      list.innerHTML = `
+        <div style="padding: 44px 20px; text-align: center; color: var(--muted); font-size: 13px;">
+          <div style="font-size: 32px; margin-bottom: 8px;">✨</div>
+          <strong style="color: var(--ink); font-size: 14.5px;">All leave requests have been reviewed!</strong>
+          <p style="margin: 6px 0 0; font-size: 12px;">No pending leave applications requiring faculty approval.</p>
+        </div>
+      `;
+    } else {
+      list.innerHTML = `
+        <div style="padding: 36px 20px; text-align: center; color: var(--muted); font-size: 13px;">
+          <div style="font-size: 26px; margin-bottom: 6px;">🔍</div>
+          <strong>No leave requests match your search or filter</strong>
+          <p style="margin: 4px 0 0; font-size: 12px;">Try switching the filter tabs or clearing your search.</p>
+        </div>
+      `;
+    }
     return;
   }
 
-  list.innerHTML = currentLeaves
-    .map(
-      (l, idx) => `
-    <div class="leave-item" data-idx="${idx}">
-      <div class="round-avatar bluebg">${l.initials}</div>
-      <div class="leave-info">
-        <strong>${l.name} <span class="leave-type">${l.type}</span></strong>
-        <p>${l.class} · ${l.dates} · Submitted today</p>
-      </div>
-      <button class="outline leave-decline-btn">Decline</button>
-      <button class="approve leave-approve-btn">Approve</button>
-    </div>
-  `
-    )
+  list.innerHTML = filtered
+    .map((l) => {
+      const isMed = (l.type || "").toLowerCase().includes("medical");
+      const isSports = (l.type || "").toLowerCase().includes("duty") || (l.type || "").toLowerCase().includes("sports");
+      const pillClass = isMed ? "medical" : isSports ? "sports" : "personal";
+      const leaveId = l.id || l.name;
+
+      return `
+        <div class="leave-item" data-id="${escapeHtml(leaveId)}">
+          <div class="leave-avatar">${escapeHtml(l.initials || "ST")}</div>
+          <div class="leave-info">
+            <div class="leave-info-top">
+              <strong>${escapeHtml(l.name)}</strong>
+              <span class="leave-type-pill ${pillClass}">${escapeHtml(l.type || "Leave Request")}</span>
+            </div>
+            <div class="leave-meta">
+              <span>📚 ${escapeHtml(l.class || "CSE 3A")}</span>
+              ${l.rollNo ? `<span>· ID: ${escapeHtml(l.rollNo)}</span>` : ""}
+              <span>· 📅 ${escapeHtml(l.dates || "Upcoming")} ${l.days ? `(${escapeHtml(l.days)})` : ""}</span>
+              <span>· ⏱ ${escapeHtml(l.submittedTime || "Today")}</span>
+            </div>
+            <div class="leave-reason-box">
+              <strong>Reason:</strong> ${escapeHtml(l.reason || "Personal medical consultation and recovery period.")}
+            </div>
+          </div>
+          <div class="leave-actions-row">
+            <button class="outline leave-decline-btn" data-id="${escapeHtml(leaveId)}">✕ Decline</button>
+            <button class="approve leave-approve-btn" data-id="${escapeHtml(leaveId)}">✓ Approve Leave</button>
+          </div>
+        </div>
+      `;
+    })
     .join("");
 
   list.querySelectorAll(".leave-approve-btn").forEach((btn) => {
-    btn.addEventListener("click", async (e) => {
-      const row = btn.closest(".leave-item");
-      const idx = Number(row.dataset.idx);
-      const leaveItem = currentLeaves[idx];
-      currentLeaves.splice(idx, 1);
-      storage.set("attendlyLeaves", currentLeaves);
-      renderLeaves();
-      toast("Leave request approved and recorded");
-      playSound("success");
-      if (leaveItem && leaveItem.id) {
-        await api.updateLeaveStatus(leaveItem.id, "approved");
-      }
+    btn.addEventListener("click", () => {
+      processLeaveDecision(btn.dataset.id, "approved");
     });
   });
 
   list.querySelectorAll(".leave-decline-btn").forEach((btn) => {
-    btn.addEventListener("click", async (e) => {
-      const row = btn.closest(".leave-item");
-      const idx = Number(row.dataset.idx);
-      const leaveItem = currentLeaves[idx];
-      currentLeaves.splice(idx, 1);
-      storage.set("attendlyLeaves", currentLeaves);
-      renderLeaves();
-      toast("Leave request declined");
-      if (leaveItem && leaveItem.id) {
-        await api.updateLeaveStatus(leaveItem.id, "declined");
-      }
+    btn.addEventListener("click", () => {
+      processLeaveDecision(btn.dataset.id, "declined");
     });
   });
 }
+
+// Attach filter tabs and search listeners for Leave requests
+$$("#leaveFilterTabs .notif-tab").forEach((tab) => {
+  tab.addEventListener("click", () => {
+    $$("#leaveFilterTabs .notif-tab").forEach((t) => t.classList.remove("active"));
+    tab.classList.add("active");
+    leaveActiveFilter = tab.dataset.leaveFilter || "all";
+    renderLeaves();
+  });
+});
+
+$("#leaveSearchInput")?.addEventListener("input", renderLeaves);
 renderLeaves();
 
 // Image Zoom Lightbox Modal
@@ -3693,11 +3923,120 @@ $$(".notify-btn").forEach((btn) => {
   });
 });
 
-// Interactive Notification Center Dropdown
+// Interactive Notification Center Dropdown & Synchronization Engine
 const notifBtn = $("#notifBtn");
 const notifDropdown = $("#notifDropdown");
 const notifDot = $("#notifDot");
 const notifUnreadBadge = $("#notifUnreadBadge");
+let activeNotifFilter = "all";
+
+function renderNotifications() {
+  const notifListEl = $("#notifList");
+  if (!notifListEl) return;
+
+  currentNotifications = storage.get("attendlyNotifications", defaultNotifications);
+
+  const unreadCount = currentNotifications.filter((n) => n.unread).length;
+
+  if (notifDot) {
+    if (unreadCount > 0) {
+      notifDot.style.display = "flex";
+      notifDot.textContent = unreadCount;
+    } else {
+      notifDot.style.display = "none";
+    }
+  }
+
+  if (notifUnreadBadge) {
+    notifUnreadBadge.textContent = `${unreadCount} New`;
+  }
+
+  // Update tab counts
+  const tabAll = $(`[data-notif-filter="all"]`);
+  if (tabAll) tabAll.textContent = `All (${currentNotifications.length})`;
+
+  const filtered = currentNotifications.filter((n) => {
+    if (activeNotifFilter === "all") return true;
+    return n.category === activeNotifFilter;
+  });
+
+  if (filtered.length === 0) {
+    notifListEl.innerHTML = `
+      <div style="padding:32px 20px; text-align:center; color:var(--muted); font-size:12.5px;">
+        <div style="font-size:24px; margin-bottom:6px;">✨</div>
+        <strong>No notifications</strong>
+        <p style="margin:4px 0 0; font-size:11px;">You're all caught up with your classes and attendance logs.</p>
+      </div>
+    `;
+    return;
+  }
+
+  notifListEl.innerHTML = filtered
+    .map((n) => {
+      let actionsHtml = "";
+      if (n.category === "leave" && n.leaveId) {
+        actionsHtml = `
+          <div class="notif-inline-actions">
+            <button class="mini-btn green notif-leave-approve" data-leave-id="${escapeHtml(n.leaveId)}">Approve</button>
+            <button class="mini-btn gray notif-leave-decline" data-leave-id="${escapeHtml(n.leaveId)}">Decline</button>
+          </div>
+        `;
+      } else if (n.actionType === "view_kiosk") {
+        actionsHtml = `
+          <div class="notif-inline-actions">
+            <button class="link-btn notif-view-btn" data-view="kiosk">View Kiosk Feed →</button>
+          </div>
+        `;
+      } else if (n.actionType === "view_reports") {
+        actionsHtml = `
+          <div class="notif-inline-actions">
+            <button class="link-btn notif-view-btn" data-view="reports">Open Defaulter Report →</button>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="notif-item ${n.unread ? "unread" : ""}" data-category="${escapeHtml(n.category)}" data-id="${escapeHtml(n.id)}">
+          <div class="notif-icon ${escapeHtml(n.iconColor || "blue-icon")}">${escapeHtml(n.icon || "◉")}</div>
+          <div class="notif-content">
+            <div class="notif-row-top">
+              <strong>${escapeHtml(n.title)}</strong>
+              <time>${escapeHtml(n.time || "Just now")}</time>
+            </div>
+            <p>${escapeHtml(n.message)}</p>
+            ${actionsHtml}
+          </div>
+        </div>
+      `;
+    })
+    .join("");
+
+  // Attach Approve / Decline listeners inside notification bell items
+  notifListEl.querySelectorAll(".notif-leave-approve").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const leaveId = btn.dataset.leaveId;
+      processLeaveDecision(leaveId, "approved");
+    });
+  });
+
+  notifListEl.querySelectorAll(".notif-leave-decline").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const leaveId = btn.dataset.leaveId;
+      processLeaveDecision(leaveId, "declined");
+    });
+  });
+
+  notifListEl.querySelectorAll(".notif-view-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      notifDropdown?.classList.remove("open");
+      const targetView = btn.dataset.view;
+      if (targetView) showView(targetView);
+    });
+  });
+}
 
 notifBtn?.addEventListener("click", (e) => {
   e.stopPropagation();
@@ -3713,47 +4052,34 @@ document.addEventListener("click", (e) => {
 // Mark All as Read
 $("#markAllReadBtn")?.addEventListener("click", (e) => {
   e.stopPropagation();
-  $$(".notif-item.unread").forEach((item) => item.classList.remove("unread"));
-  if (notifDot) notifDot.style.display = "none";
-  if (notifUnreadBadge) notifUnreadBadge.textContent = "0 New";
+  currentNotifications = storage.get("attendlyNotifications", defaultNotifications);
+  currentNotifications.forEach((n) => (n.unread = false));
+  storage.set("attendlyNotifications", currentNotifications);
+  renderNotifications();
   toast("All notifications marked as read");
 });
 
 // Notification Filter Tabs
-$$(".notif-tab").forEach((tab) => {
+$$(".notif-tab[data-notif-filter]").forEach((tab) => {
   tab.addEventListener("click", (e) => {
     e.stopPropagation();
-    $$(".notif-tab").forEach((t) => t.classList.remove("active"));
+    $$(".notif-tab[data-notif-filter]").forEach((t) => t.classList.remove("active"));
     tab.classList.add("active");
-    const filter = tab.dataset.notifFilter;
-
-    $$(".notif-item").forEach((item) => {
-      if (filter === "all" || item.dataset.category === filter) {
-        item.style.display = "flex";
-      } else {
-        item.style.display = "none";
-      }
-    });
+    activeNotifFilter = tab.dataset.notifFilter;
+    renderNotifications();
   });
 });
 
 // Clear All Notifications
 $("#clearAllNotifsBtn")?.addEventListener("click", (e) => {
   e.stopPropagation();
-  const list = $("#notifList");
-  if (list) {
-    list.innerHTML = `
-      <div style="padding:32px 20px; text-align:center; color:var(--muted); font-size:12.5px;">
-        <div style="font-size:24px; margin-bottom:6px;">✨</div>
-        <strong>No new notifications</strong>
-        <p style="margin:4px 0 0; font-size:11px;">You're all caught up with your classes and biometric logs.</p>
-      </div>
-    `;
-  }
-  if (notifDot) notifDot.style.display = "none";
-  if (notifUnreadBadge) notifUnreadBadge.textContent = "0 New";
+  currentNotifications = [];
+  storage.set("attendlyNotifications", currentNotifications);
+  renderNotifications();
   toast("Notifications cleared");
 });
+
+renderNotifications();
 
 $("#helpBtn")?.addEventListener("click", () => {
   toast("Attendly Guide: Click 'Start Camera' or 'Simulation Mode' to test biometrics!");
@@ -3891,31 +4217,46 @@ $("#submitStudentLeaveBtn")?.addEventListener("click", async () => {
     list.prepend(newItem);
   }
 
-  // Also add to teacher's leave approval list
-  const teacherLeaveList = $("#leaveList");
-  if (teacherLeaveList) {
-    const teachItem = document.createElement("div");
-    teachItem.className = "leave-item";
-    teachItem.innerHTML = `
-      <div class="avatar bluebg">ST</div>
-      <div class="leave-info">
-        <strong>Student (CSE/23/041)</strong>
-        <p><b>${escapeHtml(type)}:</b> ${escapeHtml(reason)}</p>
-        <small>${from} – ${to} · CSE 3A</small>
-      </div>
-      <div class="leave-actions">
-        <button class="primary small" onclick="this.closest('.leave-item').remove(); toast('Leave Approved');">Approve</button>
-        <button class="outline small" onclick="this.closest('.leave-item').remove(); toast('Leave Declined');">Decline</button>
-      </div>
-    `;
-    teacherLeaveList.prepend(teachItem);
+  // Add new leave to central data store
+  const newLeaveId = "leave-" + Date.now();
+  const newLeave = {
+    id: newLeaveId,
+    name: "Student",
+    rollNo: "CSE/23/041",
+    class: "CSE 3A",
+    type,
+    dates: `${from} – ${to}`,
+    days: "1–3 days",
+    reason,
+    initials: "ST",
+    submittedTime: "Just now",
+    status: "pending",
+  };
 
-    const badge = $("#leaveBadge");
-    if (badge) {
-      const cur = parseInt(badge.textContent || "0") + 1;
-      badge.textContent = cur;
-    }
-  }
+  currentLeaves = storage.get("attendlyLeaves", defaultLeaves);
+  currentLeaves.unshift(newLeave);
+  storage.set("attendlyLeaves", currentLeaves);
+
+  // Add matching notification to notification bell
+  const newNotif = {
+    id: "notif-" + Date.now(),
+    category: "leave",
+    icon: "◱",
+    iconColor: "orange-icon",
+    title: `New Leave Request: Student`,
+    time: "Just now",
+    message: `Student (CSE/23/041) requested ${type} (${from} to ${to}).`,
+    leaveId: newLeaveId,
+    unread: true,
+    actionType: "leave_decision",
+  };
+
+  currentNotifications = storage.get("attendlyNotifications", defaultNotifications);
+  currentNotifications.unshift(newNotif);
+  storage.set("attendlyNotifications", currentNotifications);
+
+  renderLeaves();
+  renderNotifications();
 
   // Update student active leaves count
   const studentActive = $("#studentActiveLeavesCount");

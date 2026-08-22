@@ -975,15 +975,54 @@
         </div>
       </section>
 
-      <!-- LEAVES -->
+      <!-- LEAVES (TEACHER & ADMIN VIEW) -->
       <section id="leaves" class="view">
         <div class="section-top">
           <div>
             <p class="eyebrow">STUDENT WELFARE</p>
             <h2>Leave approvals</h2>
-            <p>Review medical, sports, and personal leave requests</p>
+            <p>Review medical, sports, and personal leave requests requiring faculty sign-off</p>
           </div>
         </div>
+
+        <!-- Summary Stats Grid -->
+        <div class="stats-grid" style="margin-bottom:16px;">
+          <div class="stat-card">
+            <span class="stat-label">Pending Approvals</span>
+            <strong id="statLeavesPendingCount">03</strong>
+            <span class="trend up">Requiring Faculty Review</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Medical Applications</span>
+            <strong id="statLeavesMedicalCount">01</strong>
+            <span class="trend up">Doctor Certified</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Duty &amp; Sports Leaves</span>
+            <strong id="statLeavesDutyCount">01</strong>
+            <span class="trend up">Inter-College Events</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Personal Requests</span>
+            <strong id="statLeavesPersonalCount">01</strong>
+            <span class="trend up">Family &amp; Emergent</span>
+          </div>
+        </div>
+
+        <!-- Filter tabs & Search Toolbar -->
+        <div class="classes-toolbar" style="margin-bottom:14px;">
+          <div class="notif-filter-tabs" id="leaveFilterTabs" style="margin:0;">
+            <button class="notif-tab active" data-leave-filter="all">All Requests (<span id="leaveTabCountAll">3</span>)</button>
+            <button class="notif-tab" data-leave-filter="Medical">Medical</button>
+            <button class="notif-tab" data-leave-filter="Duty">Duty / Sports</button>
+            <button class="notif-tab" data-leave-filter="Personal">Personal</button>
+          </div>
+          <div class="search-wrap" style="flex:1; max-width:320px;">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="leaveSearchInput" placeholder="Search by student name or roll..." />
+          </div>
+        </div>
+
         <div class="panel leave-list" id="leaveList"></div>
       </section>
 
