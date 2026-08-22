@@ -173,14 +173,28 @@ nav {
   color: var(--green);
 }
 
-.nav-item b {
+.nav-item b,
+#leaveBadge {
   margin-left: auto;
   background: #fef3c7;
   color: #92400e;
   font-size: 11px;
+  font-weight: 700;
   border-radius: 12px;
-  padding: 2px 7px;
-  font-weight: 600;
+  padding: 2px 7.5px;
+  min-width: 20px;
+  text-align: center;
+  display: inline-block;
+  line-height: 1.35;
+  border: 1px solid #fde68a;
+  transition: all 0.2s ease;
+}
+
+.nav-item.active b,
+.nav-item.active #leaveBadge {
+  background: #ccfbf1;
+  color: #0f766e;
+  border-color: #99f6e4;
 }
 
 .kiosk-live-badge {
@@ -3348,6 +3362,23 @@ body, .sidebar, main, .panel, article, .modal-card, input, select, textarea, .re
 [data-theme="dark"] .nav-item.active {
   background: var(--green-light);
   color: #2dd4bf;
+}
+
+[data-theme="dark"] .nav-item b,
+[data-theme="dark"] #leaveBadge {
+  background: rgba(245, 158, 11, 0.22) !important;
+  color: #fbbf24 !important;
+  border: 1px solid rgba(245, 158, 11, 0.45) !important;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.25);
+  font-weight: 700;
+}
+
+[data-theme="dark"] .nav-item.active b,
+[data-theme="dark"] .nav-item.active #leaveBadge {
+  background: rgba(45, 212, 191, 0.25) !important;
+  color: #2dd4bf !important;
+  border-color: rgba(45, 212, 191, 0.5) !important;
+  box-shadow: 0 0 8px rgba(45, 212, 191, 0.25);
 }
 
 [data-theme="dark"] .profile {
